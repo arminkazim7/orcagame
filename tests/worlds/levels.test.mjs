@@ -38,6 +38,7 @@ test('invalid campaign level numbers are rejected', () => {
 test('runtime starts a level, spawns enemies and creates the configured boss', () => {
   const game = createGameRuntime({ audioEnabled: false });
   try {
+    game.progression.unlockAllLevels();
     const level = game.startLevel(3);
     assert.equal(level.number, 3);
     assert.equal(game.state.status, 'playing');
