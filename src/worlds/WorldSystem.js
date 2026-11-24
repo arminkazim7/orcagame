@@ -95,7 +95,7 @@ export class WorldSystem {
       });
       this.events.emit('boss.started', { bossId: level.boss.id, world: level.boss.world });
     }
-    this.ui?.mountMobileControls?.();
+    this.ui?.showGameplay?.({ level: number, world: level.world.name });
     this.ui?.updateHUD?.({ level: number, world: level.world.name, difficulty: this.progression.difficulty });
     this.events.emit('level.started', { level: number, world: level.world.id });
     return level;
@@ -160,7 +160,7 @@ export class WorldSystem {
       bossId
     });
     this.state.status = 'victory';
-    this.player.triggerVictoryAnimation(this.level.number === 15 ? 'grand victory leap' : null);
+    if (result.newlyUnlocked.length) this.progression.setCurrentLevel(result.newlyUnlocked[0]);
     this.events.emit('level.completed', result);
     this.ui?.showVictory?.({ level: this.level.number, playerName: this.player.name });
     return result;
@@ -223,6 +223,13 @@ export class WorldSystem {
     ctx.restore();
     this.player.render(ctx, this.cameraX);
     renderEnemies(ctx, { x: this.cameraX, y: 0 });
+  }
+
+  stop() {
+    this.state.status = 'menu';
+    this.state.gameplay.paused = true;
+    this.level = null;
+    clearEnemies();
   }
 
   dispose() {
