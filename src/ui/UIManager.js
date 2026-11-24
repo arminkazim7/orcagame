@@ -69,6 +69,7 @@ export class UIManager {
     const hud=document.createElement('aside'); hud.className='orca-hud'; hud.dataset.hud=''; hud.innerHTML=html;
     this.root.querySelector('.orca-ui')?.prepend(hud); return hud;
   }
+  showGameplay({ level=1, world='' }={}) { const result=this.#shell('Dive in Progress', `<div class="orca-game-status" data-hud></div><div class="orca-actions">${this.#button('Pause','pause')}</div>`,'GAMEPLAY'); this.updateHUD({level,world}); this.mountMobileControls(); return result; }
   showPauseMenu() { this.runtime.state.gameplay.paused=true; this.runtime.audio?.pauseAudio?.(); return this.#shell('Paused', `<p class="orca-lead">The current dive is suspended.</p><div class="orca-actions">${this.#button('Resume','resume','primary')}${this.#button('World Map','map')}${this.#button('Settings','settings')}${this.#button('Save Game','save')}${this.#button('Main Menu','menu')}</div>`,'PAUSE'); }
   showSettings() { const a=this.runtime.audio; return this.#shell('Settings', `<div class="orca-form"><label class="orca-toggle">Music <input type="checkbox" name="music" ${a?.musicEnabled!==false?'checked':''}></label><label class="orca-toggle">Sound effects <input type="checkbox" name="sound" ${a?.soundEnabled!==false?'checked':''}></label><div class="orca-actions">${this.#button('Back','menu')}</div></div>`,'AUDIO & ACCESSIBILITY'); }
   showVictory({ level=this.#state().currentLevel, animation=null, playerName=this.runtime.player.name }={}) { const chosen=animation??VICTORY_BY_LEVEL[(level-1)%VICTORY_BY_LEVEL.length]; this.runtime.player.triggerVictoryAnimation(chosen); return this.#shell('Level Complete', `<p class="orca-lead">${esc(playerName)} cleared level ${level}.</p><p class="orca-animation">Animation running: <strong>${esc(chosen)}</strong></p><div class="orca-actions">${this.#button('World Map','map')}${this.#button('Continue','continue','primary')}</div>`,'VICTORY'); }
@@ -85,6 +86,7 @@ export class UIManager {
     else if(a==='settings') this.showSettings();
     else if(a==='load') this.showLoadSave();
     else if(a==='save'){try{this.runtime.saves.downloadSave();}catch(error){this.#shell('Save Failed',`<p class="orca-lead">${esc(error.message)}</p>${this.#button('Back','menu')}`,'SAVE ERROR');}}
+    else if(a==='pause') this.showPauseMenu();
     else if(a==='resume'){this.runtime.state.gameplay.paused=false;this.runtime.audio?.resumeAudio?.();this.onInput?.({type:'resume'});}
     else if(a==='begin') this.#submitSetup();
     else if(a==='level'){const level=Number(b.dataset.level);this.runtime.progression.setCurrentLevel(level);this.onStartLevel?.(level);this.onInput?.({type:'startLevel',level});}
