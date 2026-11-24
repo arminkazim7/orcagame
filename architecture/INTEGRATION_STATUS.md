@@ -4,15 +4,15 @@
 
 | Module | Owner | Source available | Combined tests passing | Integrated into runtime | Browser acceptance | Status / gap |
 |---|---|---:|---:|---:|---:|---|
-| Architecture / composition root | Agent 0 | Yes | Previous suite only | Yes | No | Runtime now composes the world system, UI, shared input, progression, save/load and audio under one RAF loop. Browser acceptance remains pending. |
-| Game engine / collision / input | Agent 1 | Yes | Previous suite only | Partial | No | Shared keyboard/touch input is used by the player physics. The campaign uses its own horizontal camera calculation; the standalone engine camera/collision modules are not yet composed. |
-| Player and physics | Agent 2 | Yes | Previous suite only | Yes | No | Orca physics, one-way platforms, projectiles, damage, recovery and victory animation are used by WorldSystem. |
-| Worlds and levels | Agent 3 | Yes | New tests added; not run | Yes | No | Fifteen deterministic level layouts across five worlds are implemented in `src/worlds/`; WorldSystem handles the level lifecycle, camera, collectibles, exits and HUD. |
-| Enemies and bosses | Agent 4 | Yes | New integration; not run | Yes | No | WorldSystem spawns enemies and all five bosses, forwards combat events, handles projectile/stomp hits, boss health and boss victory progression. |
-| Progression and power-ups | Agent 5 | Yes | Previous suite only | Yes | No | Level completion, unlocks, Easy/Hard records, collectibles, bonus lives, checkpoint recovery and score rewards are wired to gameplay. |
-| UI and world map | Agent 6 | Yes | Previous suite only | Yes | No | Main menu, setup, map, gameplay HUD, pause/resume, victory, recovery, save/load and touch controls are connected to the world lifecycle. |
+| Architecture / composition root | Agent 0 | Yes | 186/186 | Yes | No | Runtime now composes the world system, UI, shared input, progression, save/load and audio under one RAF loop. Browser acceptance remains pending. |
+| Game engine / collision / input | Agent 1 | Yes | Engine tests included | Partial | No | Shared keyboard/touch input is used by the player physics. The campaign uses its own horizontal camera calculation; the standalone engine camera/collision modules are not yet composed. |
+| Player and physics | Agent 2 | Yes | 186/186 suite | Yes | No | Orca physics, one-way platforms, projectiles, damage, recovery and victory animation are used by WorldSystem. |
+| Worlds and levels | Agent 3 | Yes | 186/186 suite | Yes | No | Fifteen deterministic level layouts across five worlds are implemented in `src/worlds/`; WorldSystem handles the level lifecycle, camera, collectibles, exits and HUD. |
+| Enemies and bosses | Agent 4 | Yes | 186/186 suite | Yes | No | WorldSystem spawns enemies and all five bosses, forwards combat events, handles projectile/stomp hits, boss health and boss victory progression. |
+| Progression and power-ups | Agent 5 | Yes | 186/186 suite | Yes | No | Level completion, unlocks, Easy/Hard records, collectibles, bonus lives, checkpoint recovery and score rewards are wired to gameplay. |
+| UI and world map | Agent 6 | Yes | 186/186 suite | Yes | No | Main menu, setup, map, gameplay HUD, pause/resume, victory, recovery, save/load and touch controls are connected to the world lifecycle. |
 | Audio | Agent 7 | Yes | 7/7 included | Partial | No | AudioManager composed and event listeners wired; browser playback not verified. |
-| Save and Load | Agent 8 | Yes | 11/11 included | Partial | No | SaveManager composed; round-trip tested against live managers; UI file picker/download controls not wired. |
+| Save and Load | Agent 8 | Yes | 11/11 included | Yes | No | SaveManager and UI file picker/download controls are connected; active level/enemy/boss state is not yet included in portable saves. |
 | QA and acceptance | Agent 9 | No | No | No | No | No end-to-end/browser acceptance suite delivered. |
 
 ## Integration notes / resolved compatibility
