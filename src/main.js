@@ -67,7 +67,10 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
   };
   const handleUIInput = action => {
     if (action?.type === 'control') input.setControl(action.control, action.pressed);
-    if (action?.type === 'resume' || action?.type === 'recover') state.gameplay.paused = false;
+    if (action?.type === 'resume' || action?.type === 'recover') {
+      state.gameplay.paused = false;
+      if (world.level) ui?.showGameplay?.({ level: world.level.number, world: world.level.world.name });
+    }
     onInput?.(action);
   };
   const runtime = { get player() { return player; }, get state() { return state; }, get progression() { return progression; }, get score() { return score; }, get lives() { return lives; }, get powerUps() { return powerUps; }, get saves() { return saves; }, get audio() { return audio; } };
@@ -76,11 +79,10 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
   const returnToMenu = () => { world.stop(); onMainMenu?.(); };
   const ui = uiRoot ? createUIManager({ root: uiRoot, runtime, onStartLevel: startLevel, onMainMenu: returnToMenu, onInput: handleUIInput }) : null;
   world.ui = ui;
-  const unregisterWorld = null;
   ui?.showMainMenu();
   const keyActions = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', Space: 'jump', ArrowUp: 'jump', KeyW: 'jump', ArrowDown: 'dropThrough', KeyS: 'dropThrough', KeyX: 'shoot', KeyF: 'shoot' };
   const keyTarget = typeof window !== 'undefined' ? window : null;
-  const onKeyDown = event => { const action = keyActions[event.code]; if (!action || /^(INPUT|TEXTAREA|SELECT)$/.test(event.target?.tagName ?? '')) return; input.setControl(action, true); if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.code)) event.preventDefault(); };
+  const onKeyDown = event => { if (event.code === 'Escape' && ui) { event.preventDefault(); if (state.gameplay.paused) { state.gameplay.paused = false; if (world.level) ui.showGameplay({ level: world.level.number, world: world.level.world.name }); } else ui.showPauseMenu(); return; } const action = keyActions[event.code]; if (!action || /^(INPUT|TEXTAREA|SELECT)$/.test(event.target?.tagName ?? '')) return; input.setControl(action, true); if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.code)) event.preventDefault(); };
   const onKeyUp = event => { const action = keyActions[event.code]; if (action) input.setControl(action, false); };
   keyTarget?.addEventListener('keydown', onKeyDown);
   keyTarget?.addEventListener('keyup', onKeyUp);
