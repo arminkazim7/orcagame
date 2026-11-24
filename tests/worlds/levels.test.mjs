@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createLevel, LEVELS } from '../../src/worlds/levels.js';
 import { createGameRuntime } from '../../src/main.js';
-import { getBoss, clearEnemies } from '../../src/enemies/index.js';
+import { getBoss, damageBoss, clearEnemies } from '../../src/enemies/index.js';
 
 test('campaign contains fifteen valid layouts across five worlds', () => {
   assert.equal(LEVELS.length, 15);
@@ -48,6 +48,24 @@ test('runtime starts a level, spawns enemies and creates the configured boss', (
     assert.ok(game.input.setControl('left', true));
     assert.equal(game.input.isDown('ArrowLeft'), true);
     assert.equal(game.input.isDown('KeyA'), true);
+    game.input.setControl('dropThrough', true);
+    assert.equal(game.input.isDown('ArrowDown'), true);
+    assert.equal(game.input.isDown('Space'), true);
+  } finally {
+    game.dispose();
+    clearEnemies();
+  }
+});
+
+test('boss defeat bridges the configured campaign boss ID into progression', () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    game.progression.unlockAllLevels();
+    game.startLevel(3);
+    assert.ok(damageBoss(1, 10000));
+    game.world.update(1.5, game.state, game.events, game.input);
+    assert.ok(game.progression.defeatedBosses.includes('coral-warden'));
+    assert.equal(game.state.status, 'victory');
   } finally {
     game.dispose();
     clearEnemies();
