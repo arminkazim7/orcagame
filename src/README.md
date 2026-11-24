@@ -17,7 +17,7 @@ npm test
 npm run check
 ```
 
-The test suite is rooted in the repository-level `tests/` directory. The checks cover the composition root, world layouts, runtime level startup, UI, player, progression, audio, save/load, and engine modules. Browser playtesting and the final single-file release build are still release gates; automated tests have not yet been run against the latest integration commits.
+The test suite is rooted in the repository-level `tests/` directory. The latest GitHub Actions run passed **186 tests with 0 failures**, and the runtime syntax checks passed. Coverage includes the composition root, world layouts, runtime level startup, UI, player, progression, audio, save/load, and engine modules. Browser playtesting and the final single-file release build are still release gates.
 
 ## Runtime API
 
