@@ -11,7 +11,7 @@
  * `DemoBox` is a throw-away physics rectangle used to exercise the collision system. It is
  * not the player; the player agent owns the real implementation.
  */
-import { Entity, Scene } from '../GameEngine.js';
+import { Entity, Scene } from '../src/engine/GameEngine.js';
 
 export const WORLD_WIDTH = 3200;
 export const WORLD_HEIGHT = 900;
