@@ -25,6 +25,14 @@ const TRACKS = Object.freeze({
   'boss-5': { bpm: 124, melody: [NOTE.C6, NOTE.G5, NOTE.A5, NOTE.E5, NOTE.F5, NOTE.C5, NOTE.D5, NOTE.G5, NOTE.A5, NOTE.E5, NOTE.G5, NOTE.C6, NOTE.B4, NOTE.G5, NOTE.C6, NOTE.REST], bass: [NOTE.C3, NOTE.G3, NOTE.A3, NOTE.E3, NOTE.F4, NOTE.C3, NOTE.D3, NOTE.G3, NOTE.A3, NOTE.E3, NOTE.G3, NOTE.C3, NOTE.G3, NOTE.G3, NOTE.C3, NOTE.C3] }
 });
 
+const BOSS_TRACK_BY_ID = Object.freeze({
+  'coral-warden': 'boss-1',
+  'kelp-guardian': 'boss-2',
+  'ice-leviathan': 'boss-3',
+  'ruin-colossus': 'boss-4',
+  'abyss-emperor': 'boss-5'
+});
+
 const SOUND_IDS = new Set([
   'jump', 'shoot', 'enemyDefeat', 'powerUp', 'bonusLife', 'playerDamage',
   'checkpoint', 'bossDamage', 'bossDefeat', 'levelComplete', 'victory'
@@ -105,9 +113,10 @@ export class AudioManager {
 
   _bossTrackId(bossId) {
     const raw = String(bossId ?? '1').toLowerCase();
-    const match = raw.match(/[1-5]/);
-    const number = match ? Number(match[0]) : 1;
-    return `boss-${number}`;
+    if (BOSS_TRACK_BY_ID[raw]) return BOSS_TRACK_BY_ID[raw];
+    const match = raw.match(/(?:boss[-_ ]?w?[-_ ]?)?([1-5])$/);
+    if (!match) throw new RangeError(`Unknown boss ID: ${bossId}`);
+    return `boss-${Number(match[1])}`;
   }
 
   _requestTrack(trackId) {
