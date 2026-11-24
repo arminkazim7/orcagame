@@ -60,3 +60,9 @@ export function createParticle(x, y, color, rng = Math.random) {
 }
 
 
+
+/** Ensure newly spawned entities do not reuse IDs from a restored save. */
+export function ensureNextEntityId(value) {
+  if (Number.isSafeInteger(value) && value > nextId) nextId = value;
+  return nextId;
+}
