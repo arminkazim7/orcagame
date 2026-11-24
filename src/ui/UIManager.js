@@ -25,7 +25,8 @@ export class UIManager {
   }
   #shell(title, body, subtitle='') {
     this.screen = title.toLowerCase().replace(/[^a-z]+/g,'-');
-    this.root.innerHTML = `<section class="orca-ui" aria-live="polite"><header class="orca-top"><div class="orca-mark">◈ ORCA ADVENTURE</div><div class="orca-sub">${esc(subtitle)}</div></header><main class="orca-panel"><h1>${esc(title)}</h1>${body}</main><footer class="orca-foot">THE DEEP IS CALLING <span>◆ ◆ ◆</span></footer></section>`;
+    this.root.innerHTML = `<section class="orca-ui"><header class="orca-top"><div class="orca-mark">◈ ORCA ADVENTURE</div><div class="orca-sub">${esc(subtitle)}</div></header><main class="orca-panel"><h1 tabindex="-1" aria-live="polite">${esc(title)}</h1>${body}</main><footer class="orca-foot">THE DEEP IS CALLING <span>◆ ◆ ◆</span></footer></section>`;
+    this.root.querySelector('.orca-panel h1')?.focus?.({ preventScroll: true });
     return this.root;
   }
   #button(label, action, extra='') { return `<button type="button" class="orca-btn ${extra}" data-action="${esc(action)}">${esc(label)}</button>`; }
@@ -67,7 +68,7 @@ export class UIManager {
     this.root.querySelector('[data-hud]')?.remove();
     const html=fields.map(([k,v])=>`<div><small>${esc(k)}</small><b>${esc(v)}</b>${k==='NEXT LIFE'?`<i style="--progress:${bar}%"></i>`:''}</div>`).join('');
     if (typeof document === 'undefined') return { className:'orca-hud', innerHTML:html, dataset:{hud:''} };
-    const hud=document.createElement('aside'); hud.className='orca-hud'; hud.dataset.hud=''; hud.innerHTML=html;
+    const hud=document.createElement('aside'); hud.className='orca-hud'; hud.dataset.hud=''; hud.setAttribute('role','group'); hud.setAttribute('aria-label','Game status'); hud.innerHTML=html;
     this.root.querySelector('.orca-ui')?.prepend(hud); return hud;
   }
   showGameplay({ level=1, world='' }={}) { const result=this.#shell('Dive in Progress', `<div class="orca-game-status" data-hud></div><div class="orca-actions">${this.#button('Pause','pause')}</div>`,'GAMEPLAY'); this.updateHUD({level,world}); this.mountMobileControls(); return result; }
