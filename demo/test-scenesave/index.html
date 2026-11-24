@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Orca Adventure — Save/Load Test Scene</title>
+  <style>
+    body{font:16px system-ui,sans-serif;max-width:760px;margin:3rem auto;padding:0 1rem;background:#eef6f8;color:#16313b}
+    main{background:white;border:1px solid #c8dce2;border-radius:12px;padding:1.5rem}
+    button{padding:.65rem 1rem;margin:.25rem;border:0;border-radius:6px;background:#126782;color:white;cursor:pointer}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f1f5f6;padding:1rem;border-radius:8px;min-height:5rem}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Save/Load isolated test scene</h1>
+  <p>This harness demonstrates browser JSON export and file-picker import with a minimal mock game state.</p>
+  <p><button id="save">Download JSON save</button><button id="load">Load JSON save</button></p>
+  <pre id="status">Ready. No save has been loaded.</pre>
+</main>
+<script type="module">
+  import { SaveManager } from '../src/save/index.js';
+  const profile = { name: 'Demo Orca', colour: '#168AAD', cheatUnlocked: false };
+  const player = { x: 120, y: 260, vx: 0, vy: 0, grounded: true, facing: 'right' };
+  const progression = {
+    totalLevels: 3, currentLevel: 1, difficulty: 'easy', unlockedLevels: [1], completedLevels: {},
+    records: { easy: {}, hard: {} }, goldLevels: [], unlockedBosses: [], defeatedBosses: [], orcalordUnlocked: false,
+    serialize(){ return { totalLevels:this.totalLevels,currentLevel:this.currentLevel,difficulty:this.difficulty,unlockedLevels:this.unlockedLevels,completedLevels:this.completedLevels,records:this.records,goldLevels:this.goldLevels,unlockedBosses:this.unlockedBosses,defeatedBosses:this.defeatedBosses,orcalordUnlocked:this.orcalordUnlocked }; },
+    deserialize(s){ Object.assign(this,s); }
+  };
+  const lives = { lives:3, deathCount:0, serialize(){return {lives:this.lives,deathCount:this.deathCount};}, deserialize(s){Object.assign(this,s);} };
+  const score = { score:0, serialize(){return {score:this.score,nextThreshold:10000,awardedThresholds:[],threshold:10000};}, deserialize(s){this.score=s.score;} };
+  const powerUps = { serialize(){return {active:null,protectionHits:0};}, deserialize(){} };
+  const checkpoints = { serialize(){return null;}, deserialize(){} };
+  const manager = new SaveManager({ player, profile, progression, lives, score, powerUps, checkpoints, totalLevels:3,
+    getGameplayState:()=>({scene:'demo',elapsedSeconds:0}), setGameplayState:state=>{ window.lastLoadedSceneState=state; } });
+  const status = document.querySelector('#status');
+  document.querySelector('#save').addEventListener('click',()=>{
+    try { const data=manager.createSave(); manager.downloadSave(data); status.textContent='Save generated and download initiated.\n'+JSON.stringify(data,null,2); }
+    catch(error){ status.textContent='Save failed: '+error.message; }
+  });
+  document.querySelector('#load').addEventListener('click',async()=>{
+    try { const result=await manager.pickAndLoadSave(); status.textContent=JSON.stringify(result,null,2); }
+    catch(error){ status.textContent='Load failed: '+error.message; }
+  });
+</script>
+</body>
+</html>

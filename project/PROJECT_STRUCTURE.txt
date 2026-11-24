@@ -1,0 +1,20 @@
+orca-adventure/
+├── index.html
+├── package.json
+├── README.md
+├── src/
+│   ├── main.js
+│   ├── game-config.js
+│   ├── game-state.js
+│   ├── event-bus.js
+│   ├── engine/ (GameEngine, Renderer, Camera, Collision, InputManager)
+│   ├── player/ (Orca, OrcaPhysics, OrcaAnimation, Projectiles)
+│   ├── worlds/ (WorldManager, LevelLoader, LevelData, TerrainRenderer, levels/)
+│   ├── enemies/ (Enemy, EnemyManager, Boss, BossManager)
+│   ├── progression/ (PowerUpManager, LifeManager, ScoreManager, CheckpointManager)
+│   ├── ui/ (Menu, CharacterSetup, WorldMap, HUD, VictoryScreen, MobileControls)
+│   ├── audio/ (AudioManager, Music, SoundEffects)
+│   ├── save/ (SaveManager)
+│   └── styles/ (game.css)
+├── tests/ (engine, player, levels, combat, progression, save, integration)
+└── dist/ (orca-adventure.html)

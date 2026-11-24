@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Orca Adventure — Agent 6 UI Test Scene</title>
+  <style>html,body{margin:0;min-height:100%;background:#031b32}#game-ui{min-height:100vh}.scene-tools{position:fixed;right:10px;top:10px;z-index:20;display:flex;gap:5px;flex-wrap:wrap}.scene-tools button{padding:7px;background:#0a5268;color:white;border:1px solid #7ce4ec}</style>
+</head>
+<body>
+  <div id="game-ui"></div>
+  <div class="scene-tools"><button data-screen="menu">Menu</button><button data-screen="map">Map</button><button data-screen="hud">HUD</button><button data-screen="pause">Pause</button><button data-screen="recovery">Recovery</button><button data-screen="victory">Victory</button><button data-screen="mobile">Touch controls</button></div>
+  <script type="module">
+    import { createGameRuntime } from '../src/main.js';
+    const root=document.querySelector('#game-ui');
+    const runtime=createGameRuntime({uiRoot:root,audioEnabled:true,onStartLevel:level=>console.info('Level start requested:',level),onInput:action=>console.info('UI intent:',action)});
+    runtime.ui.showMainMenu();
+    document.querySelector('.scene-tools').addEventListener('click',event=>{
+      const screen=event.target.dataset.screen;if(!screen)return;
+      if(screen==='menu')runtime.ui.showMainMenu();
+      if(screen==='map')runtime.ui.showWorldMap();
+      if(screen==='hud'){runtime.ui.showMainMenu();runtime.ui.updateHUD({bossHealth:76});}
+      if(screen==='pause')runtime.ui.showPauseMenu();
+      if(screen==='recovery')runtime.ui.showRecoveryScreen();
+      if(screen==='victory')runtime.ui.showVictory({level:15});
+      if(screen==='mobile'){runtime.ui.showMainMenu();runtime.ui.mountMobileControls();}
+    });
+    window.addEventListener('pagehide',()=>runtime.dispose(),{once:true});
+  </script>
+</body>
+</html>

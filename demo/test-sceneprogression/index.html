@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent 5 — Progression Test Scene</title>
+<style>
+:root{color-scheme:dark;font:15px system-ui,sans-serif;background:#071d31;color:#e9f8ff}body{max-width:1000px;margin:24px auto;padding:0 16px}h1{font-size:1.45rem}p{color:#a9c9d9}canvas{display:block;width:100%;max-width:900px;background:#0b4260;border:1px solid #2c718c;border-radius:12px}section{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}button{border:1px solid #43829b;border-radius:8px;background:#123e59;color:#f1fbff;padding:9px 12px;cursor:pointer}button:hover{background:#1a5675}pre{white-space:pre-wrap;background:#0b263a;border:1px solid #244a62;border-radius:8px;padding:12px;line-height:1.5}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.stat{background:#0b263a;padding:10px;border-radius:8px}.stat b{display:block;color:#85def0;font-size:1.2rem}
+</style></head>
+<body>
+<h1>Agent 5 — Power-ups, Score, Lives, and Progression</h1>
+<p>Isolated test harness. Use the controls to collect items, take hits, recover, activate checkpoints, and complete levels. No game engine or production game loop is started.</p>
+<canvas id="scene" width="900" height="280" aria-label="Orca progression test illustration"></canvas>
+<section>
+<button data-power="sea-berry">Collect Sea Berry</button><button data-power="golden-krill">Collect Golden Krill</button><button data-power="bubble-shell">Collect Bubble Shell</button><button id="hit">Take protected hit</button><button id="bonus">Collect Bonus Life</button><button id="score">+10,000 score</button>
+</section>
+<section>
+<button id="checkpoint">Activate checkpoint</button><button id="lose">Lose one life</button><button id="complete-easy">Complete level (Easy)</button><button id="complete-hard">Complete level (Hard)</button><button id="save">Serialize state</button><button id="reset">Reset demo</button>
+</section>
+<div class="stats" id="stats"></div>
+<pre id="log" aria-live="polite">Ready.</pre>
+<script type="module">
+import { PowerUpManager, LifeManager, ScoreManager, CheckpointManager, ProgressionManager } from '../src/progression/index.js';
+class Bus { constructor(){this.map=new Map()} on(k,f){this.map.set(k,[...(this.map.get(k)||[]),f])} emit(k,v){for(const f of this.map.get(k)||[])f(v)} }
+const canvas=document.querySelector('#scene'),ctx=canvas.getContext('2d'),log=document.querySelector('#log'),stats=document.querySelector('#stats');
+const player={x:110,y:120,vx:0,vy:0,sizeScale:1,jumpScale:1,protectionHits:0,applyPowerUp(id){const e={'sea-berry':[1.4,1],'golden-krill':[1.8,1.35],'bubble-shell':[1,1]}[id];this.activePowerUp=id;this.setSize(e[0]);this.setJumpStrength(e[1]);this.protectionHits=1},setSize(v){this.sizeScale=v},setJumpStrength(v){this.jumpScale=v},clearPowerUp(){this.activePowerUp=null;this.protectionHits=0;this.setSize(1);this.setJumpStrength(1)},recover(){this.clearPowerUp();this.vx=this.vy=0}};
+const events=new Bus(); let checkpoints,powerUps,lives,score,progression,bonus;
+function setup(){checkpoints=new CheckpointManager({events});powerUps=new PowerUpManager({player,events});lives=new LifeManager({player,powerUps,checkpoints,events,levelStart:{x:110,y:120}});score=new ScoreManager({lives,events});progression=new ProgressionManager({events,totalLevels:5,bossUnlocks:{3:['kelp-guardian']}});bonus={id:'bonus-life-demo'};player.x=110;player.y=120;player.clearPowerUp();}
+function say(message){log.textContent=message+'\n'+log.textContent;}
+function draw(){ctx.clearRect(0,0,900,280);const g=ctx.createLinearGradient(0,0,0,280);g.addColorStop(0,'#0a5778');g.addColorStop(1,'#092a48');ctx.fillStyle=g;ctx.fillRect(0,0,900,280);ctx.fillStyle='#15536a';ctx.fillRect(0,235,900,45);for(let i=0;i<12;i++){ctx.beginPath();ctx.arc((i*89+35)%900,35+(i*37)%175,3+(i%3),0,Math.PI*2);ctx.fillStyle='#a4eaff55';ctx.fill()}
+const scale=player.sizeScale;ctx.save();ctx.translate(player.x,player.y);ctx.scale(scale,scale);ctx.fillStyle='#101820';ctx.beginPath();ctx.ellipse(0,0,66,31,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f7f8f4';ctx.beginPath();ctx.ellipse(12,15,38,12,0,0,Math.PI);ctx.fill();ctx.fillStyle='#f4f7f5';ctx.beginPath();ctx.ellipse(43,-12,12,17,-.2,0,Math.PI*2);ctx.fill();ctx.fillStyle='#101820';ctx.beginPath();ctx.moveTo(-20,-25);ctx.lineTo(-10,-61);ctx.lineTo(6,-27);ctx.fill();ctx.beginPath();ctx.moveTo(-53,0);ctx.lineTo(-82,-20);ctx.lineTo(-69,1);ctx.lineTo(-82,20);ctx.closePath();ctx.fill();ctx.fillStyle='#07111a';ctx.beginPath();ctx.arc(49,-13,3,0,Math.PI*2);ctx.fill();if(powerUps.getActivePowerUp()){ctx.strokeStyle='#8eeaff';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,76,43,0,0,Math.PI*2);ctx.stroke()}ctx.restore();
+ctx.fillStyle='#eafaff';ctx.font='14px system-ui';ctx.fillText('World-space respawn marker',640,30);ctx.fillStyle='#ffdc83';ctx.fillRect(670,43,4,150);ctx.beginPath();ctx.arc(672,43,8,0,Math.PI*2);ctx.fill();
+}
+function renderStats(){const active=powerUps.getActivePowerUp();const milestone=score.getMilestoneProgress();const state=progression.getProgressionState();stats.innerHTML=[['Lives',lives.getLives()],['Score',score.getScore()],['Next extra life',milestone.remaining],['Deaths',lives.deathCount],['Power-up',active?.name??'None'],['Size / jump',`${player.sizeScale.toFixed(2)} / ${player.jumpScale.toFixed(2)}`],['Current level',state.currentLevel],['Unlocked levels',state.unlockedLevels.join(', ')],['Gold levels',state.goldLevels.join(', ')||'None'],['Orcalord',state.orcalordUnlocked?'Unlocked':'Locked']].map(([a,b])=>`<div class="stat">${a}<b>${b}</b></div>`).join('');draw()}
+setup();renderStats();
+document.querySelectorAll('[data-power]').forEach(b=>b.addEventListener('click',()=>{powerUps.collectPowerUp(b.dataset.power);say(`Collected ${b.textContent}. Previous power-up replaced if present.`);renderStats()}));
+document.querySelector('#hit').onclick=()=>{const active=powerUps.getActivePowerUp();if(active){powerUps.consumeProtection();say(`${active.name} absorbed one hit.`)}else say('No one-hit protection active.');renderStats()};
+document.querySelector('#bonus').onclick=()=>{const result=lives.collectBonusLife(bonus);say(result.collected?'Bonus Life: +1 life.':'Bonus Life already collected.');renderStats()};
+document.querySelector('#score').onclick=()=>{const r=score.addScore(10000);say(`Score is ${r.score}; extra-life milestones: ${r.awards.join(', ')||'none'}.`);renderStats()};
+document.querySelector('#checkpoint').onclick=()=>{checkpoints.activateCheckpoint({id:'demo-reef',x:430,y:150,level:1});say('Checkpoint activated at world position (430, 150).');renderStats()};
+document.querySelector('#lose').onclick=()=>{const r=lives.loseLife();say(r.recovered?`All lives lost: recovered at (${r.respawn.x}, ${r.respawn.y}); death count ${r.deathCount}.`:`Lost one life; ${r.lives} remain.`);renderStats()};
+function complete(difficulty){const r=progression.completeLevel({level:progression.currentLevel,difficulty,score:score.getScore(),time:120});say(`Level ${r.level} completed on ${difficulty}; unlocked: ${r.newlyUnlocked.join(', ')||'none'}; Gold: ${r.gold?'yes':'no'}.`);if(r.level<5)progression.setCurrentLevel(r.level+1);progression.setDifficulty(difficulty,{reason:'level-complete'});renderStats()}
+document.querySelector('#complete-easy').onclick=()=>complete('easy');document.querySelector('#complete-hard').onclick=()=>complete('hard');
+document.querySelector('#save').onclick=()=>say(JSON.stringify({powerUps:powerUps.serialize(),lives:lives.serialize(),score:score.serialize(),checkpoint:checkpoints.serialize(),progression:progression.serialize()},null,2));
+document.querySelector('#reset').onclick=()=>{setup();log.textContent='Demo reset.';renderStats()};
+</script></body></html>

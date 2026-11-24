@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Orca Player — Isolated Test Scene</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#061c31;color:#eaf8ff;font:15px system-ui,sans-serif;padding:20px}main{max-width:980px;margin:auto}h1{margin:0 0 12px}canvas{width:100%;height:auto;display:block;border:1px solid #38718d;border-radius:12px;background:#073653}section{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}button,input,select{border:1px solid #4a7892;border-radius:7px;background:#123b56;color:#f2fbff;padding:9px}button{cursor:pointer}small{color:#b5d4e4}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+</style>
+</head>
+<body><main>
+<h1>Orca Character & Physics — Test Scene</h1>
+<canvas id="scene" width="960" height="520" aria-label="Orca player physics test scene"></canvas>
+<section class="row"><label>Name <input id="name" value="Orca" maxlength="24"></label><label>Colour <select id="color"><option>classic</option><option>midnight</option><option>teal</option><option>rose</option><option>gold</option></select></label><button id="customize">Apply</button><button id="berry">Sea Berry</button><button id="krill">Golden Krill</button><button id="bubble">Bubble Shell</button><button id="damage">Damage</button><button id="reset">Reset</button></section>
+<section id="victories"></section>
+<p><small>Move: A/D or ←/→ · Jump: Space/↑/W · Shoot: X/F · Drop: Down+Jump. Test scene owns its own loop; production integration must use the shared engine loop.</small></p>
+<p id="status">Ready</p>
+</main>
+<script type="module">
+import { Orca, VICTORY_ANIMATIONS } from '../src/player/index.js';
+const canvas=document.querySelector('#scene'),ctx=canvas.getContext('2d'),status=document.querySelector('#status');
+const keys={};
+addEventListener('keydown',e=>{keys[e.code]=true;if(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault()});
+addEventListener('keyup',e=>keys[e.code]=false);
+const platforms=[{x:0,y:450,w:960,h:70},{x:190,y:350,w:170,h:14,oneWay:true},{x:430,y:285,w:180,h:14,oneWay:true},{x:700,y:365,w:180,h:14,oneWay:true},{x:390,y:405,w:95,h:16}];
+let events=[];const orca=new Orca({x:75,y:390,onEvent:(name,data)=>{events.push(name);status.textContent=name+(data?.name?`: ${data.name}`:'')}});
+const input={isDown:key=>!!keys[key]};let last=0;
+function draw(){const g=ctx.createLinearGradient(0,0,0,520);g.addColorStop(0,'#0b6382');g.addColorStop(1,'#041a35');ctx.fillStyle=g;ctx.fillRect(0,0,960,520);for(let i=0;i<22;i++){ctx.strokeStyle='rgba(164,231,248,.16)';ctx.beginPath();ctx.arc((i*89+35)%960,(i*53+18)%430,3+i%4,0,Math.PI*2);ctx.stroke()}
+ for(const p of platforms){ctx.fillStyle=p.oneWay?'#328d8a':'#294f70';ctx.fillRect(p.x,p.y,p.w,p.h);ctx.fillStyle='#79d6bd';ctx.fillRect(p.x,p.y,p.w,4)}
+ orca.render(ctx,0);ctx.fillStyle='#d8f4ff';ctx.font='13px system-ui';ctx.fillText(`x ${orca.x.toFixed(0)}  y ${orca.y.toFixed(0)}  size ${orca.sizeScale.toFixed(2)}  jump ${orca.jumpScale.toFixed(2)}  shield ${orca.protectionHits}`,16,24);
+}
+function loop(now){const dt=Math.min((now-last)/1000||0,1/30);last=now;orca.update(dt,input,platforms,{projectileBounds:{left:-20,right:980}});draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+document.querySelector('#customize').onclick=()=>orca.customize({name:document.querySelector('#name').value,color:document.querySelector('#color').value});
+document.querySelector('#berry').onclick=()=>orca.applyPowerUp('sea-berry');document.querySelector('#krill').onclick=()=>orca.applyPowerUp('golden-krill');document.querySelector('#bubble').onclick=()=>orca.applyPowerUp('bubble-shell');
+document.querySelector('#damage').onclick=()=>{const hit=orca.takeDamage();status.textContent=hit?'Damage applied':'Damage absorbed / invulnerable'};
+document.querySelector('#reset').onclick=()=>{orca.x=75;orca.y=390;orca.vx=orca.vy=0;orca.grounded=false;orca.recover();orca.animation.victory=null};
+const list=document.querySelector('#victories');for(const name of VICTORY_ANIMATIONS){const b=document.createElement('button');b.textContent=name;b.onclick=()=>orca.triggerVictoryAnimation(name,2.8);list.append(b)}
+</script></body></html>
