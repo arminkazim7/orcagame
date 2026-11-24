@@ -4,7 +4,7 @@
 
 | Module | Owner | Source available | Combined tests passing | Integrated into runtime | Browser acceptance | Status / gap |
 |---|---|---:|---:|---:|---:|---|
-| Architecture / composition root | Agent 0 | Yes | 186/186 | Yes | No | Runtime now composes the world system, UI, shared input, progression, save/load and audio under one RAF loop. Browser acceptance remains pending. |
+| Architecture / composition root | Agent 0 | Yes | 187/187 | Yes | No | Runtime now composes the world system, UI, shared input, progression, save/load and audio under one RAF loop. Browser acceptance remains pending. |
 | Game engine / collision / input | Agent 1 | Yes | Engine tests included | Partial | No | Shared keyboard/touch input is used by the player physics. The campaign uses its own horizontal camera calculation; the standalone engine camera/collision modules are not yet composed. |
 | Player and physics | Agent 2 | Yes | 186/186 suite | Yes | No | Orca physics, one-way platforms, projectiles, damage, recovery and victory animation are used by WorldSystem. |
 | Worlds and levels | Agent 3 | Yes | 186/186 suite | Yes | No | Fifteen deterministic level layouts across five worlds are implemented in `src/worlds/`; WorldSystem handles the level lifecycle, camera, collectibles, exits and HUD. |
@@ -32,7 +32,7 @@ Run `npm test` and `npm run check` from `src/`. The package scripts now point to
 - Bridged Agent 4 encounter events into the runtime event bus; added player damage handling and stomp bounce.
 - Added a browser entry point at `demo/orca-adventure.html` and a transparent gameplay HUD overlay.
 - Added campaign/runtime tests and expanded syntax checks. These tests have not yet been executed against the latest commits.
-- Remaining release gates: browser acceptance, final single-file bundle, full regression verification, and portable save/load of active world/encounter state.
+- Remaining release gates: browser acceptance, browser acceptance, full regression verification, and portable save/load of active world/encounter state.
 
 ## Release gate
 Do not mark complete until all five worlds / fifteen playable levels, five functional bosses, character setup, Easy/Hard rules, Orcalord cheat, combat, collectibles, checkpoint/recovery, victory animations, original gameplay + five boss tracks, world map, JSON Save/Load UI, keyboard/mobile input, single-file bundle, and browser acceptance tests have passed.
