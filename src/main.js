@@ -51,13 +51,14 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
   bus.on('level.completed', result => { state.progression.currentLevel = Math.min(GAME_CONFIG.progression.totalLevels, result.level + 1); });
   let raf = null, previous = null, running = false;
   const systems = [];
-  const controls = { left: false, right: false, jump: false, shoot: false, dropThrough: false };
+  const controls = { left: false, right: false, jump: false, down: false, shoot: false, dropThrough: false };
   const input = {
     ...controls,
     isDown(action) { return Boolean(controls[action]); },
     setControl(action, pressed) {
       if (!Object.hasOwn(controls, action)) return false;
       controls[action] = Boolean(pressed);
+      if (action === 'dropThrough') { controls.down = Boolean(pressed); controls.jump = Boolean(pressed); }
       return true;
     },
     releaseAll() { for (const action of Object.keys(controls)) controls[action] = false; }
@@ -70,6 +71,12 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
   const runtime = { get player() { return player; }, get state() { return state; }, get progression() { return progression; }, get score() { return score; }, get lives() { return lives; }, get powerUps() { return powerUps; }, get saves() { return saves; }, get audio() { return audio; } };
   const ui = uiRoot ? createUIManager({ root: uiRoot, runtime, onStartLevel, onMainMenu, onInput: handleUIInput }) : null;
   ui?.showMainMenu();
+  const keyActions = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', Space: 'jump', ArrowUp: 'jump', KeyW: 'jump', ArrowDown: 'down', KeyS: 'down', KeyX: 'shoot', KeyF: 'shoot' };
+  const keyTarget = typeof window !== 'undefined' ? window : null;
+  const onKeyDown = event => { const action = keyActions[event.code]; if (!action || /^(INPUT|TEXTAREA|SELECT)$/.test(event.target?.tagName ?? '')) return; input.setControl(action, true); if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.code)) event.preventDefault(); };
+  const onKeyUp = event => { const action = keyActions[event.code]; if (action) input.setControl(action, false); };
+  keyTarget?.addEventListener('keydown', onKeyDown);
+  keyTarget?.addEventListener('keyup', onKeyUp);
   function frame(timestamp) {
     if (!running) return;
     const dt = previous === null ? 0 : Math.min((timestamp - previous) / 1000, 1 / 15); previous = timestamp;
@@ -91,6 +98,6 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
     start() { if (running || typeof requestAnimationFrame !== 'function') return false; running = true; previous = null; raf = requestAnimationFrame(frame); return true; },
     stop() { running = false; if (raf !== null && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(raf); raf = null; previous = null; input.releaseAll(); },
     async unlockAudio() { return audio?.unlockAudio(); },
-    dispose() { this.stop(); ui?.dispose?.(); audio?.dispose?.(); bus.clear(); }
+    dispose() { this.stop(); keyTarget?.removeEventListener('keydown', onKeyDown); keyTarget?.removeEventListener('keyup', onKeyUp); ui?.dispose?.(); audio?.dispose?.(); bus.clear(); }
   };
 }
