@@ -63,6 +63,18 @@ test('each of the five boss tracks replaces the previous scheduler', async () =>
   await audio.dispose();
 });
 
+test('campaign boss IDs select their matching distinct music tracks', async () => {
+  const audio = makeAudio();
+  await audio.unlockAudio();
+  const ids = ['coral-warden','kelp-guardian','ice-leviathan','ruin-colossus','abyss-emperor'];
+  for (let i = 0; i < ids.length; i += 1) {
+    audio.playBossMusic(ids[i]);
+    assert.equal(audio.currentTrack, `boss-${i + 1}`, ids[i]);
+  }
+  assert.throws(() => audio.playBossMusic('unknown-boss'), /Unknown boss ID/);
+  await audio.dispose();
+});
+
 test('music and sound settings are independent', async () => {
   const audio = makeAudio();
   await audio.unlockAudio();
