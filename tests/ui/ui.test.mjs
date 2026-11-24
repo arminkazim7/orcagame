@@ -27,3 +27,23 @@ test('mobile controls expose all five required control actions',()=>{const {root
 test('UI disposal unregisters event listeners',()=>{const {root,ui}=fixture();ui.dispose();assert.deepEqual(root.listeners,{});});
 test('pause menu pauses the shared runtime state and audio scheduler',()=>{const {runtime,ui}=fixture();ui.showPauseMenu();assert.equal(runtime.state.gameplay.paused,true);});
 test('UI is attachable from the Agent 0 composition root',()=>{const root=new FakeRoot();const runtime=createGameRuntime({uiRoot:root,audioEnabled:false});assert.ok(runtime.ui instanceof UIManager);runtime.ui.showMainMenu();assert.ok(root.innerHTML.includes('Orca Adventure'));runtime.dispose();});
+
+test('mobile controls support simultaneous pointers and release each action independently',()=>{
+  const {root,runtime,ui}=fixture();
+  const actions=[];
+  ui.onInput=action=>actions.push(action);
+  const button=control=>({dataset:{control},classList:{values:new Set(),add(v){this.values.add(v);},remove(v){this.values.delete(v);}},setPointerCapture(){}});
+  const left=button('left'), jump=button('jump');
+  const down=(pointerId,target)=>root.listeners.pointerdown({pointerId,target:{closest:()=>target},preventDefault(){}});
+  const up=pointerId=>root.listeners.pointerup({pointerId});
+  down(1,left);down(2,jump);
+  assert.equal(runtime.input.isDown('left'),true);
+  assert.equal(runtime.input.isDown('jump'),true);
+  up(1);
+  assert.equal(runtime.input.isDown('left'),false);
+  assert.equal(runtime.input.isDown('jump'),true);
+  up(2);
+  assert.equal(runtime.input.isDown('jump'),false);
+  assert.deepEqual(actions.map(a=>[a.control,a.pressed]),[['left',true],['jump',true],['left',false],['jump',false]]);
+  runtime.dispose();
+});
