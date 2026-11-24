@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   spawnEnemies, updateEnemies, spawnBoss, damageBoss, damageEnemy,
   updateBoss, isBossDefeated, clearEnemies, events, configure, _getState,
-} from '../src/enemies/index.js';
+} from '../../src/enemies/index.js';
 
 function fakePlayer(props = {}) {
   return {
@@ -46,7 +46,7 @@ test('hard boss health is exactly twice easy boss health, for all five worlds', 
 });
 
 test('bosses exist for all five worlds with unique names/shapes/patterns', async () => {
-  const { BOSS_DEFS } = await import('../src/enemies/index.js');
+  const { BOSS_DEFS } = await import('../../src/enemies/index.js');
   const shapes = new Set(), patterns = new Set();
   for (const w of [1, 2, 3, 4, 5]) {
     assert.ok(BOSS_DEFS[w], `world ${w} boss missing`);
