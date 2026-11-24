@@ -13,7 +13,7 @@
  */
 import { EventBus } from './events.js';
 import { getDifficulty, enemyCountFor } from './difficulty.js';
-import { createEnemy, createProjectile, createParticle } from './entities.js';
+import { createEnemy, createProjectile, createParticle, ensureNextEntityId } from './entities.js';
 import { BOSS_DEFS, createBoss, runBossPattern, DEFEAT_ANIMATION_DURATION } from './bosses.js';
 
 export { DIFFICULTIES } from './difficulty.js';
@@ -515,7 +515,7 @@ export function restoreEncounter(snapshot) {
   ]));
   state.activeBossWorld = snapshot.activeBossWorld ?? null;
   const ids = [...state.enemies, ...state.projectiles].map(entity => entity.id).filter(Number.isInteger);
-  nextId = Math.max(1, ...ids.map(id => id + 1));
+  ensureNextEntityId(Math.max(1, ...ids.map(id => id + 1)));
   return true;
 }
 
