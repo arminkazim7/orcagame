@@ -6,6 +6,7 @@ import { PowerUpManager, LifeManager, ScoreManager, CheckpointManager, Progressi
 import { SaveManager } from './save/index.js';
 import { AudioManager } from './audio/index.js';
 import { createUIManager } from './ui/index.js';
+import { WorldSystem } from './worlds/WorldSystem.js';
 
 /** Compose specialist systems around one state/event bus and one animation loop. */
 export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, audioEnabled = true, onStartLevel = null, onMainMenu = null, onInput = null } = {}) {
@@ -52,9 +53,10 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
   let raf = null, previous = null, running = false;
   const systems = [];
   const controls = { left: false, right: false, jump: false, down: false, shoot: false, dropThrough: false };
+  const controlAliases = { ArrowLeft: 'left', KeyA: 'left', a: 'left', A: 'left', ArrowRight: 'right', KeyD: 'right', d: 'right', D: 'right', Space: 'jump', ArrowUp: 'jump', KeyW: 'jump', w: 'jump', W: 'jump', ArrowDown: 'down', KeyS: 'down', s: 'down', S: 'down', KeyX: 'shoot', KeyF: 'shoot', x: 'shoot', X: 'shoot', f: 'shoot', F: 'shoot' };
   const input = {
     ...controls,
-    isDown(action) { return Boolean(controls[action]); },
+    isDown(action) { const key = controlAliases[action] ?? action; return Boolean(controls[key]); },
     setControl(action, pressed) {
       if (!Object.hasOwn(controls, action)) return false;
       controls[action] = Boolean(pressed);
@@ -69,14 +71,20 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
     onInput?.(action);
   };
   const runtime = { get player() { return player; }, get state() { return state; }, get progression() { return progression; }, get score() { return score; }, get lives() { return lives; }, get powerUps() { return powerUps; }, get saves() { return saves; }, get audio() { return audio; } };
-  const ui = uiRoot ? createUIManager({ root: uiRoot, runtime, onStartLevel, onMainMenu, onInput: handleUIInput }) : null;
+  const world = new WorldSystem({ canvas, player, state, events: bus, progression, score, lives, powerUps, checkpoints, ui: null });
+  const startLevel = level => { const result = world.startLevel(level); onStartLevel?.(level); return result; };
+  const returnToMenu = () => { world.stop(); onMainMenu?.(); };
+  const ui = uiRoot ? createUIManager({ root: uiRoot, runtime, onStartLevel: startLevel, onMainMenu: returnToMenu, onInput: handleUIInput }) : null;
+  world.ui = ui;
+  const unregisterWorld = null;
   ui?.showMainMenu();
-  const keyActions = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', Space: 'jump', ArrowUp: 'jump', KeyW: 'jump', ArrowDown: 'down', KeyS: 'down', KeyX: 'shoot', KeyF: 'shoot' };
+  const keyActions = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', Space: 'jump', ArrowUp: 'jump', KeyW: 'jump', ArrowDown: 'dropThrough', KeyS: 'dropThrough', KeyX: 'shoot', KeyF: 'shoot' };
   const keyTarget = typeof window !== 'undefined' ? window : null;
   const onKeyDown = event => { const action = keyActions[event.code]; if (!action || /^(INPUT|TEXTAREA|SELECT)$/.test(event.target?.tagName ?? '')) return; input.setControl(action, true); if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.code)) event.preventDefault(); };
   const onKeyUp = event => { const action = keyActions[event.code]; if (action) input.setControl(action, false); };
   keyTarget?.addEventListener('keydown', onKeyDown);
   keyTarget?.addEventListener('keyup', onKeyUp);
+  systems.push(world);
   function frame(timestamp) {
     if (!running) return;
     const dt = previous === null ? 0 : Math.min((timestamp - previous) / 1000, 1 / 15); previous = timestamp;
@@ -93,11 +101,12 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
     raf = requestAnimationFrame(frame);
   }
   return {
-    config: GAME_CONFIG, state, events: bus, player, checkpoints, powerUps, lives, score, progression, saves, audio, ui, input,
+    config: GAME_CONFIG, state, events: bus, player, checkpoints, powerUps, lives, score, progression, saves, audio, ui, input, world,
+    startLevel,
     registerSystem(system) { if (!system || typeof system !== 'object') throw new TypeError('System must be an object'); systems.push(system); return () => { const i = systems.indexOf(system); if (i >= 0) systems.splice(i,1); }; },
     start() { if (running || typeof requestAnimationFrame !== 'function') return false; running = true; previous = null; raf = requestAnimationFrame(frame); return true; },
     stop() { running = false; if (raf !== null && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(raf); raf = null; previous = null; input.releaseAll(); },
     async unlockAudio() { return audio?.unlockAudio(); },
-    dispose() { this.stop(); keyTarget?.removeEventListener('keydown', onKeyDown); keyTarget?.removeEventListener('keyup', onKeyUp); ui?.dispose?.(); audio?.dispose?.(); bus.clear(); }
+    dispose() { this.stop(); keyTarget?.removeEventListener('keydown', onKeyDown); keyTarget?.removeEventListener('keyup', onKeyUp); world.dispose(); ui?.dispose?.(); audio?.dispose?.(); bus.clear(); }
   };
 }
