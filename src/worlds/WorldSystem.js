@@ -162,7 +162,9 @@ export class WorldSystem {
     this.state.status = 'victory';
     if (result.newlyUnlocked.length) this.progression.setCurrentLevel(result.newlyUnlocked[0]);
     this.events.emit('level.completed', result);
-    this.ui?.showVictory?.({ level: this.level.number, playerName: this.player.name });
+    if (this.level.number === 15) this.ui?.showFinalEnding?.({ playerName: this.player.name });
+    else if (bossId) this.ui?.showBossVictory?.({ level: this.level.number, bossId, playerName: this.player.name });
+    else this.ui?.showVictory?.({ level: this.level.number, playerName: this.player.name });
     return result;
   }
 
