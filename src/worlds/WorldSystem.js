@@ -49,7 +49,7 @@ export class WorldSystem {
         this.#completeLevel(bossId);
       })
     ];
-    this.events.on('player.damaged', () => {
+    this.unsubscribers.push(this.events.on('player.damaged', () => {
       const result = this.lives.loseLife({ reason: 'enemy-hit', levelStart: this.level?.start });
       if (result.recovered) {
         this.state.gameplay.paused = true;
@@ -58,7 +58,7 @@ export class WorldSystem {
         this.player.y = result.respawn.y;
         this.ui?.showRecoveryScreen?.();
       }
-    });
+    }));
   }
 
   startLevel(number) {
@@ -84,6 +84,7 @@ export class WorldSystem {
     this.player.projectiles.clear();
     this.player.physics.gravity = level.gravity;
     this.player.setInvulnerable(900);
+    this.events.emit('level.started', { level: number, world: level.world.id });
     spawnEnemies({
       level: number,
       difficulty: this.progression.difficulty,
@@ -99,7 +100,6 @@ export class WorldSystem {
     }
     this.ui?.showGameplay?.({ level: number, world: level.world.name });
     this.ui?.updateHUD?.({ level: number, world: level.world.name, difficulty: this.progression.difficulty });
-    this.events.emit('level.started', { level: number, world: level.world.id });
     return level;
   }
 
