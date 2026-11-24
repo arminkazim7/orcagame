@@ -105,6 +105,23 @@ export class SaveManager {
       if (!isObject(c) || !Number.isFinite(c.x) || !Number.isFinite(c.y) || (c.id !== null && c.id !== undefined && (typeof c.id !== 'string' || c.id.length > 100)) || (c.level !== null && c.level !== undefined && !isInt(c.level, 1, p?.totalLevels ?? this.totalLevels))) fail('checkpoint is invalid');
       else if (c.level != null && p?.currentLevel !== c.level) fail('checkpoint level must match current level');
     }
+    if (isObject(input.gameplayState) && input.gameplayState.world !== undefined && input.gameplayState.world !== null) {
+      const world = input.gameplayState.world;
+      if (!isObject(world) || !isInt(world.level, 1, this.totalLevels) ||
+          typeof world.elapsed !== 'number' || !Number.isFinite(world.elapsed) || world.elapsed < 0 ||
+          typeof world.cameraX !== 'number' || !Number.isFinite(world.cameraX) || world.cameraX < 0 ||
+          typeof world.completed !== 'boolean' || !Array.isArray(world.collectibles) ||
+          !isObject(world.encounter)) fail('gameplayState.world is invalid');
+      else {
+        if (world.collectibles.length > 100 || !world.collectibles.every(item =>
+          isObject(item) && typeof item.id === 'string' && typeof item.collected === 'boolean')) fail('gameplayState.world.collectibles is invalid');
+        const encounter = world.encounter;
+        if (!Array.isArray(encounter.enemies) || !Array.isArray(encounter.projectiles) ||
+            !Array.isArray(encounter.particles) || !Array.isArray(encounter.bosses) ||
+            encounter.enemies.length > 250 || encounter.projectiles.length > 500 ||
+            encounter.particles.length > 1000 || encounter.bosses.length > 1) fail('gameplayState.world.encounter is invalid');
+      }
+    }
     if (!isObject(input.gameplayState)) fail('gameplayState must be an object');
     else {
       if (input.gameplayState.player !== undefined && input.gameplayState.player !== null) {
