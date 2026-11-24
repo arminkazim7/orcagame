@@ -97,9 +97,37 @@ export class UIManager {
   #submitSetup(){const f=this.root.querySelector('[data-form="setup"]');if(!f?.reportValidity())return;const fd=new FormData(f), name=String(fd.get('name')).trim(), colour=String(fd.get('colour')), difficulty=String(fd.get('difficulty'));this.runtime.player.customize({name,color:colour});if(difficulty!==this.#state().difficulty)this.runtime.progression.setDifficulty(difficulty,{reason:'initialization'});this.runtime.state.player.name=name;this.runtime.state.player.color=colour;this.onInput?.({type:'profile',name,colour,difficulty});this.showWorldMap();}
   #handleChange(e){if(e.target.name==='colour')this.#drawPreview(this.root.querySelector('[data-preview]'),e.target.value);if(e.target.name==='music')this.runtime.audio?.setMusicEnabled(e.target.checked);if(e.target.name==='sound')this.runtime.audio?.setSoundEnabled(e.target.checked);if(e.target.matches('[data-save-file]'))this.#loadFile(e.target.files?.[0]);}
   async #loadFile(file){if(!file)return;const message=this.root.querySelector('[data-save-message]');try{const result=await this.runtime.saves.loadSave(file);if(!result?.loaded)throw new Error(result?.errors?.join('; ')??'Save could not be loaded');if(this.runtime.world?.level){const level=this.runtime.world.level;if(this.runtime.world.completed){if(level.number===15)this.showFinalEnding({playerName:this.runtime.player.name});else if(level.boss)this.showBossVictory({level:level.number,bossId:level.boss.id,playerName:this.runtime.player.name});else this.showVictory({level:level.number,playerName:this.runtime.player.name});}else if(this.runtime.state.gameplay.paused)this.showPauseMenu();else this.showGameplay({level:level.number,world:level.world.name});}else this.showWorldMap();}catch(error){if(message)message.textContent=`Save rejected: ${error.message}`;}}
-  #handlePointer(e,down){const button=e.target.closest?.('[data-control]');if(down){if(!button)return;e.preventDefault();const key=button.dataset.control;this._activeControl={key,button,pointerId:e.pointerId};button.setPointerCapture?.(e.pointerId);this.input[key]=true;button.classList.add('pressed');this.onInput?.({type:'control',control:key,pressed:true});return;}if(!this._activeControl)return;const active=this._activeControl;this._activeControl=null;this.input[active.key]=false;active.button.classList.remove('pressed');this.onInput?.({type:'control',control:active.key,pressed:false});}
-  mountMobileControls(){this.root.insertAdjacentHTML('beforeend',this.showMobileControls());return this.root.querySelector('.orca-mobile-controls');}
-  dispose(){this.root.removeEventListener('click',this._click);this.root.removeEventListener('change',this._change);this.root.removeEventListener('pointerdown',this._pointerDown);this.root.removeEventListener('pointerup',this._pointerUp);this.root.removeEventListener('pointercancel',this._pointerUp);this.root.removeEventListener('lostpointercapture',this._pointerUp);this.root.replaceChildren();}
+  #handlePointer(e,down){
+    if(down){
+      const button=e.target.closest?.('[data-control]');
+      if(!button || this._activePointers.has(e.pointerId)) return;
+      e.preventDefault();
+      const key=button.dataset.control;
+      this._activePointers.set(e.pointerId,{key,button});
+      button.setPointerCapture?.(e.pointerId);
+      const alreadyHeld=[...this._activePointers.values()].some(active=>active.key===key && active.button!==button);
+      this.input[key]=true;
+      button.classList.add('pressed');
+      if(!alreadyHeld)this.onInput?.({type:'control',control:key,pressed:true});
+      return;
+    }
+    const active=this._activePointers.get(e.pointerId);
+    if(!active)return;
+    this._activePointers.delete(e.pointerId);
+    const stillHeld=[...this._activePointers.values()].some(pointer=>pointer.key===active.key);
+    if(!stillHeld){
+      this.input[active.key]=false;
+      this.onInput?.({type:'control',control:active.key,pressed:false});
+    }
+    if(![...this._activePointers.values()].some(pointer=>pointer.button===active.button))active.button.classList.remove('pressed');
+  }
+  mountMobileControls(){this.root.querySelector('.orca-mobile-controls')?.remove();this.root.insertAdjacentHTML('beforeend',this.showMobileControls());return this.root.querySelector('.orca-mobile-controls');}
+  dispose(){
+    for(const active of this._activePointers.values())active.button.classList.remove('pressed');
+    for(const key of Object.keys(this.input)){if(this.input[key])this.onInput?.({type:'control',control:key,pressed:false});this.input[key]=false;}
+    this._activePointers.clear();
+    this.root.removeEventListener('click',this._click);this.root.removeEventListener('change',this._change);this.root.removeEventListener('pointerdown',this._pointerDown);this.root.removeEventListener('pointerup',this._pointerUp);this.root.removeEventListener('pointercancel',this._pointerUp);this.root.removeEventListener('lostpointercapture',this._pointerUp);this.root.replaceChildren();
+  }
 }
 
 export const createUIManager = options => new UIManager(options);
