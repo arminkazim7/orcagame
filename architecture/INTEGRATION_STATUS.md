@@ -4,14 +4,14 @@
 
 | Module | Owner | Source available | Combined tests passing | Integrated into runtime | Browser acceptance | Status / gap |
 |---|---|---:|---:|---:|---:|---|
-| Architecture / composition root | Agent 0 | Yes | Current CI run required | Yes | No | Runtime now composes the world system, UI, shared input, progression, save/load and audio under one RAF loop. Browser acceptance remains pending. |
+| Architecture / composition root | Agent 0 | Yes | 194/194 | Yes | No | Runtime now composes the world system, UI, shared input, progression, save/load and audio under one RAF loop. Browser acceptance remains pending. |
 | Game engine / collision / input | Agent 1 | Yes | Engine tests included | Partial | No | Shared keyboard/touch input is used by the player physics. The campaign uses its own horizontal camera calculation; the standalone engine camera/collision modules are not yet composed. |
-| Player and physics | Agent 2 | Yes | Current CI run required suite | Yes | No | Orca physics, one-way platforms, projectiles, damage, recovery and victory animation are used by WorldSystem. |
+| Player and physics | Agent 2 | Yes | 194/194 suite | Yes | No | Orca physics, one-way platforms, projectiles, damage, recovery and victory animation are used by WorldSystem. |
 | Worlds and levels | Agent 3 | Yes | 186/186 suite | Yes | No | Fifteen deterministic level layouts across five worlds are implemented in `src/worlds/`; WorldSystem handles the level lifecycle, camera, collectibles, exits and HUD. |
 | Enemies and bosses | Agent 4 | Yes | 186/186 suite | Yes | No | WorldSystem spawns enemies and all five bosses, forwards combat events, handles projectile/stomp hits, boss health and boss victory progression. |
 | Progression and power-ups | Agent 5 | Yes | 186/186 suite | Yes | No | Level completion, unlocks, Easy/Hard records, collectibles, bonus lives, checkpoint recovery and score rewards are wired to gameplay. |
-| UI and world map | Agent 6 | Yes | 186/186 suite | Yes | No | Main menu, setup, map, gameplay HUD, pause/resume, victory, recovery, save/load and touch controls are connected to the world lifecycle. |
-| Audio | Agent 7 | Yes | Audio unit tests included | Partial | No | AudioManager composed and event listeners wired; browser playback not verified. |
+| UI and world map | Agent 6 | Yes | 186/186 suite | Yes | No | Main menu, setup, map, gameplay HUD, pause/resume, victory, recovery, save/load and multi-pointer touch controls are connected; screen transitions announce and focus their headings. |
+| Audio | Agent 7 | Yes | Audio unit tests included | Partial | No | AudioManager composed; campaign boss IDs map to five distinct tracks, level start/complete transitions select the correct track, and browser playback remains unverified. |
 | Save and Load | Agent 8 | Yes | Save/load unit tests included | Yes | No | SaveManager and UI file picker/download controls are connected; portable saves now include active level, collectibles, enemies, projectiles, boss state, player position, and paused/completed state. |
 | QA and acceptance | Agent 9 | No | No | No | No | No end-to-end/browser acceptance suite delivered. |
 
@@ -32,7 +32,7 @@ Run `npm test` and `npm run check` from `src/`. The package scripts now point to
 - Bridged Agent 4 encounter events into the runtime event bus; added player damage handling and stomp bounce.
 - Added a browser entry point at `demo/orca-adventure.html` and a transparent gameplay HUD overlay.
 - Added campaign/runtime tests and expanded syntax checks. These tests have not yet been executed against the latest commits.
-- Remaining release gates: full regression verification for the current commit, real-browser acceptance across desktop and mobile layouts, screen-reader review, and physical-device touch testing.
+- Remaining release gates: real-browser acceptance across desktop and mobile layouts, screen-reader review with assistive technology, physical-device touch testing, and a decision on whether the standalone Agent 1 engine should replace the campaign's current loop/camera implementation.
 
 ## Release gate
 Do not mark complete until all five worlds / fifteen playable levels, five functional bosses, character setup, Easy/Hard rules, Orcalord cheat, combat, collectibles, checkpoint/recovery, victory animations, original gameplay + five boss tracks, world map, JSON Save/Load UI, keyboard/mobile input, single-file bundle, and browser acceptance tests have passed.
