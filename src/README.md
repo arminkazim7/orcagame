@@ -15,9 +15,11 @@ Requires a modern browser and Node.js 20+. From this directory:
 ```sh
 npm test
 npm run check
+npm install
+npm run build
 ```
 
-The test suite is rooted in the repository-level `tests/` directory. The latest GitHub Actions run passed **186 tests with 0 failures**, and the runtime syntax checks passed. Coverage includes the composition root, world layouts, runtime level startup, UI, player, progression, audio, save/load, and engine modules. Browser playtesting and the final single-file release build are still release gates.
+The test suite is rooted in the repository-level `tests/` directory. The latest GitHub Actions run passed **186 tests with 0 failures**, and the runtime syntax checks passed. Coverage includes the composition root, world layouts, runtime level startup, UI, player, progression, audio, save/load, and engine modules. The build writes a self-contained `dist/orca-adventure.html` with bundled JavaScript and inline CSS. GitHub Actions uploads it as the `orca-adventure-html` artifact. Browser playtesting is still a release gate.
 
 ## Runtime API
 
