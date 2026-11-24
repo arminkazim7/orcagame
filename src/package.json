@@ -5,6 +5,6 @@
   "type": "module",
   "scripts": {
     "test": "node --test ../tests",
-    "check": "node --check main.js && node --check game-state.js && node --check event-bus.js"
+    "check": "node --check main.js && node --check worlds/levels.js && node --check worlds/WorldSystem.js && node --check ui/UIManager.js"
   }
 }
