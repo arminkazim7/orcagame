@@ -461,6 +461,64 @@ export function clearEnemies() {
   state.activeBossWorld = null;
 }
 
+/**
+ * Capture the active encounter as plain JSON data for portable saves.
+ * Static boss definitions are referenced by world number and reattached on restore.
+ */
+export function serializeEncounter() {
+  const plain = value => JSON.parse(JSON.stringify(value));
+  return {
+    enemies: plain(state.enemies),
+    projectiles: plain(state.projectiles),
+    particles: plain(state.particles),
+    bosses: [...state.bosses.values()].map(boss => {
+      const { def, ...snapshot } = boss;
+      return plain(snapshot);
+    }),
+    activeBossWorld: state.activeBossWorld
+  };
+}
+
+/** Restore a previously validated encounter snapshot after the target level is spawned. */
+export function restoreEncounter(snapshot) {
+  if (!snapshot || !Array.isArray(snapshot.enemies) || !Array.isArray(snapshot.projectiles) ||
+      !Array.isArray(snapshot.particles) || !Array.isArray(snapshot.bosses)) {
+    throw new TypeError('Invalid encounter snapshot');
+  }
+  if (snapshot.enemies.length > 250 || snapshot.projectiles.length > 500 ||
+      snapshot.particles.length > 1000 || snapshot.bosses.length > 1) {
+    throw new RangeError('Encounter snapshot exceeds entity limits');
+  }
+  const finite = value => Number.isFinite(value);
+  for (const enemy of snapshot.enemies) {
+    if (!enemy || !['walker','flyer','shooter'].includes(enemy.type) ||
+        !['x','y','vx','vy','w','h','hp','speed','dir'].every(key => finite(enemy[key]))) {
+      throw new TypeError('Encounter contains an invalid enemy');
+    }
+  }
+  for (const projectile of snapshot.projectiles) {
+    if (!projectile || !['x','y','vx','vy','radius','ttl','damage'].every(key => finite(projectile[key])) ||
+        !['player','enemy'].includes(projectile.owner)) throw new TypeError('Encounter contains an invalid projectile');
+  }
+  for (const boss of snapshot.bosses) {
+    if (!boss || !Number.isInteger(boss.world) || !BOSS_DEFS[boss.world] ||
+        !['x','y','vx','vy','health','maxHealth','attackTimer','defeatTimer'].every(key => finite(boss[key]))) {
+      throw new TypeError('Encounter contains an invalid boss');
+    }
+  }
+  state.enemies = JSON.parse(JSON.stringify(snapshot.enemies));
+  state.projectiles = JSON.parse(JSON.stringify(snapshot.projectiles));
+  state.particles = JSON.parse(JSON.stringify(snapshot.particles));
+  state.bosses = new Map(snapshot.bosses.map(snapshotBoss => [
+    snapshotBoss.world,
+    { ...JSON.parse(JSON.stringify(snapshotBoss)), def: BOSS_DEFS[snapshotBoss.world] }
+  ]));
+  state.activeBossWorld = snapshot.activeBossWorld ?? null;
+  const ids = [...state.enemies, ...state.projectiles].map(entity => entity.id).filter(Number.isInteger);
+  nextId = Math.max(1, ...ids.map(id => id + 1));
+  return true;
+}
+
 /** Test/debug accessor. */
 export function _getState() {
   return state;
