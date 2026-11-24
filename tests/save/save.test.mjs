@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SaveManager, SAVE_VERSION } from '../src/save/index.js';
+import { SaveManager, SAVE_VERSION } from '../../src/save/index.js';
 
 function makeHarness() {
   const profile = { name: 'Nori', colour: '#12ABEF', cheatUnlocked: false };
