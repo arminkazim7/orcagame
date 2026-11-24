@@ -19,7 +19,7 @@ export class UIManager {
   }
 
   #installStyles() {
-    if (typeof document === 'undefined' || document.getElementById('orca-ui-styles')) return;
+    if (typeof document === 'undefined' || document.getElementById('orca-ui-styles') || document.querySelector('style[data-orca-inline-styles]')) return;
     const link = document.createElement('link'); link.id = 'orca-ui-styles'; link.rel = 'stylesheet'; link.href = new URL('./ui.css', import.meta.url).href; document.head.append(link);
   }
   #shell(title, body, subtitle='') {
