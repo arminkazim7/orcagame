@@ -12,6 +12,7 @@ export class UIManager {
     if (!runtime) throw new TypeError('UIManager requires the composed game runtime');
     this.root = root; this.runtime = runtime; this.onStartLevel = onStartLevel; this.onMainMenu = onMainMenu; this.onInput = onInput;
     this.input = { left:false, right:false, jump:false, shoot:false, dropThrough:false };
+    this._activePointers = new Map();
     this.screen = 'menu'; this._click = e => this.#handleClick(e); this._change = e => this.#handleChange(e); this._pointerDown = e => this.#handlePointer(e, true); this._pointerUp = e => this.#handlePointer(e, false);
     root.addEventListener('click', this._click); root.addEventListener('change', this._change);
     root.addEventListener('pointerdown', this._pointerDown); root.addEventListener('pointerup', this._pointerUp); root.addEventListener('pointercancel', this._pointerUp); root.addEventListener('lostpointercapture', this._pointerUp);
