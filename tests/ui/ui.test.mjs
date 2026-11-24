@@ -31,7 +31,7 @@ test('UI is attachable from the Agent 0 composition root',()=>{const root=new Fa
 test('mobile controls support simultaneous pointers and release each action independently',()=>{
   const {root,runtime,ui}=fixture();
   const actions=[];
-  ui.onInput=action=>actions.push(action);
+  ui.onInput=action=>{actions.push(action);runtime.input.setControl(action.control,action.pressed);};
   const button=control=>({dataset:{control},classList:{values:new Set(),add(v){this.values.add(v);},remove(v){this.values.delete(v);}},setPointerCapture(){}});
   const left=button('left'), jump=button('jump');
   const down=(pointerId,target)=>root.listeners.pointerdown({pointerId,target:{closest:()=>target},preventDefault(){}});
