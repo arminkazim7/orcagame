@@ -7,7 +7,7 @@ const ROUTES = [
 ];
 
 export function createLevel(levelNumber) {
-  const number = Math.floor(Number(levelNumber));
+  const number = Number(levelNumber);
   if (!Number.isInteger(number) || number < 1 || number > GAME_CONFIG.progression.totalLevels) {
     throw new RangeError('Level must be between 1 and 15');
   }
