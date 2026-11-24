@@ -1,7 +1,7 @@
 import { createLevel } from './levels.js';
 import {
   spawnEnemies, updateEnemies, renderEnemies, spawnBoss, updateBoss,
-  getBoss, clearEnemies, events as enemyEvents
+  getBoss, clearEnemies, serializeEncounter, restoreEncounter, events as enemyEvents
 } from '../enemies/index.js';
 
 const intersects = (a, b) =>
@@ -168,6 +168,45 @@ export class WorldSystem {
     else if (bossId) this.ui?.showBossVictory?.({ level: this.level.number, bossId, playerName: this.player.name });
     else this.ui?.showVictory?.({ level: this.level.number, playerName: this.player.name });
     return result;
+  }
+
+  serializeState() {
+    if (!this.level) return null;
+    return {
+      level: this.level.number,
+      elapsed: this.elapsed,
+      cameraX: this.cameraX,
+      completed: this.completed,
+      collectibles: this.level.collectibles.map(item => ({ id: item.id, collected: Boolean(item.collected) })),
+      encounter: serializeEncounter()
+    };
+  }
+
+  restoreState(snapshot) {
+    if (snapshot == null) return false;
+    if (!Number.isInteger(snapshot.level) || snapshot.level < 1 || snapshot.level > 15 ||
+        !Number.isFinite(snapshot.elapsed) || snapshot.elapsed < 0 ||
+        !Number.isFinite(snapshot.cameraX) || snapshot.cameraX < 0 ||
+        typeof snapshot.completed !== 'boolean' || !Array.isArray(snapshot.collectibles) ||
+        !snapshot.encounter || typeof snapshot.encounter !== 'object') {
+      throw new TypeError('Invalid saved world state');
+    }
+    this.startLevel(snapshot.level);
+    this.elapsed = snapshot.elapsed;
+    this.cameraX = Math.min(this.level.width - (this.canvas?.width ?? 960), snapshot.cameraX);
+    this.state.gameplay.cameraX = this.cameraX;
+    this.state.gameplay.elapsedSeconds = snapshot.elapsed;
+    this.completed = snapshot.completed;
+    const collected = new Map(snapshot.collectibles.map(item => [item.id, item.collected]));
+    for (const item of this.level.collectibles) {
+      if (collected.has(item.id)) item.collected = collected.get(item.id) === true;
+    }
+    restoreEncounter(snapshot.encounter);
+    if (this.level.boss) {
+      const boss = getBoss(this.level.boss.world);
+      if (!boss) throw new TypeError('Saved boss encounter is missing its level boss');
+    }
+    return true;
   }
 
   render(ctx) {
