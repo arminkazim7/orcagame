@@ -40,7 +40,7 @@ export class WorldSystem {
         this.events.emit('enemy.defeated', event);
         this.score.addScore(250);
       }),
-      enemyEvents.on('enemy:stomped', event => this.events.emit('enemy.stomped', event)),
+      enemyEvents.on('enemy:stomped', event => { this.player.vy = -300; this.player.grounded = false; this.events.emit('enemy.stomped', event); }),
       enemyEvents.on('boss:damaged', event => this.events.emit('boss.damaged', event)),
       enemyEvents.on('boss:defeating', event => this.events.emit('boss.defeating', event)),
       enemyEvents.on('boss:defeated', event => {
