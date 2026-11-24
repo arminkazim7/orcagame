@@ -48,6 +48,7 @@ test('canonical configuration contains five worlds with three levels each and fi
 test('runtime selects gameplay music first and then the matching boss track', () => {
   const game = createGameRuntime();
   try {
+    game.progression.unlockAllLevels();
     game.startLevel(1);
     assert.equal(game.audio.currentTrack, 'gameplay');
     game.startLevel(3);
