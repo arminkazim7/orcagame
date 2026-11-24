@@ -44,3 +44,22 @@ test('canonical configuration contains five worlds with three levels each and fi
   assert.equal(GAME_CONFIG.worlds.flatMap(w => w.levels).length, 15);
   assert.equal(GAME_CONFIG.bosses.length, 5);
 });
+
+test('runtime selects gameplay music first and then the matching boss track', () => {
+  const game = createGameRuntime();
+  try {
+    game.startLevel(1);
+    assert.equal(game.audio.currentTrack, 'gameplay');
+    game.startLevel(3);
+    assert.equal(game.audio.currentTrack, 'boss-1');
+  } finally {
+    game.dispose();
+  }
+});
+
+test('world event listeners are removed when the runtime is disposed', () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  assert.equal(game.events.listenerCount('player.damaged'), 1);
+  game.dispose();
+  assert.equal(game.events.listenerCount('player.damaged'), 0);
+});
