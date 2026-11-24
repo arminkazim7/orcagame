@@ -103,9 +103,9 @@ export class UIManager {
       if(!button || this._activePointers.has(e.pointerId)) return;
       e.preventDefault();
       const key=button.dataset.control;
+      const alreadyHeld=[...this._activePointers.values()].some(active=>active.key===key);
       this._activePointers.set(e.pointerId,{key,button});
       button.setPointerCapture?.(e.pointerId);
-      const alreadyHeld=[...this._activePointers.values()].some(active=>active.key===key && active.button!==button);
       this.input[key]=true;
       button.classList.add('pressed');
       if(!alreadyHeld)this.onInput?.({type:'control',control:key,pressed:true});
