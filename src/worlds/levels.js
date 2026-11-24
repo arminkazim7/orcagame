@@ -19,14 +19,14 @@ export function createLevel(levelNumber) {
     ...route.map(([x, y, w], index) => ({
       id: `level-${number}-platform-${index + 1}`,
       x: Math.min(GAME_CONFIG.physics.worldWidth - w - 80, x + ((number - 1) % 3) * 28),
-      y: y + ((number + index) % 2) * 18,
+      y: Math.max(380, Math.min(430, y + ((number + index) % 2) * 18)),
       w, h: 18, oneWay: true
     }))
   ];
   const collectibles = [
-    { id: `berry-${number}`, type: 'powerup', powerUp: 'sea-berry', x: 650 + (number % 3) * 35, y: 330 },
-    { id: `krill-${number}`, type: 'powerup', powerUp: 'golden-krill', x: 2140, y: 250 },
-    { id: `bubble-${number}`, type: 'powerup', powerUp: 'bubble-shell', x: 3540, y: 270 },
+    { id: `berry-${number}`, type: 'powerup', powerUp: 'sea-berry', x: 650 + (number % 3) * 35, y: 365 },
+    { id: `krill-${number}`, type: 'powerup', powerUp: 'golden-krill', x: 2140, y: 365 },
+    { id: `bubble-${number}`, type: 'powerup', powerUp: 'bubble-shell', x: 3540, y: 365 },
     { id: `life-${number}`, type: 'life', x: 4380, y: 420 },
     { id: `checkpoint-${number}`, type: 'checkpoint', x: 2450, y: 430 }
   ];
@@ -44,7 +44,7 @@ export function createLevel(levelNumber) {
     start: { x: 80, y: GAME_CONFIG.physics.groundY - 48 },
     exit: { x: GAME_CONFIG.physics.worldWidth - 110, y: GAME_CONFIG.physics.groundY - 90, w: 70, h: 90 },
     boss: number % 3 === 0
-      ? { world: worldIndex + 1, id: world.bossId, arena: { x: 3650, y: 270, w: 1050, h: 210 } }
+      ? { world: worldIndex + 1, id: world.bossId, arena: { x: 3650, y: GAME_CONFIG.physics.groundY, w: 1050, h: 210 } }
       : null,
     background: world.palette
   };
