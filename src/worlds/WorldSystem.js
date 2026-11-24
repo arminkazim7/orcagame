@@ -197,7 +197,7 @@ export class WorldSystem {
     if (savedLevelStart && this.lives) this.lives.levelStart = savedLevelStart;
     if (savedCheckpoint !== null) this.checkpoints?.deserialize?.(savedCheckpoint);
     this.elapsed = snapshot.elapsed;
-    this.cameraX = Math.min(this.level.width - (this.canvas?.width ?? 960), snapshot.cameraX);
+    this.cameraX = Math.max(0, Math.min(this.level.width - (this.canvas?.width ?? 960), snapshot.cameraX));
     this.state.gameplay.cameraX = this.cameraX;
     this.state.gameplay.elapsedSeconds = snapshot.elapsed;
     this.completed = snapshot.completed;
