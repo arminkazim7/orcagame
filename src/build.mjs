@@ -17,7 +17,7 @@ const [bundle, css] = await Promise.all([
   }),
   transform(cssSource, { loader: 'css', minify: true })
 ]);
-const js = bundle.outputFiles.find(file => file.path.endsWith('.js'))?.text;
+const js = bundle.outputFiles[0]?.text;
 if (!js) throw new Error('esbuild did not produce the browser JavaScript bundle');
 
 const inlineScript = `<script type="module">\n${js}\n</script>`;
