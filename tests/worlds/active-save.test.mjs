@@ -49,3 +49,22 @@ test('invalid active world snapshots are rejected before changing live state', (
     clearEnemies();
   }
 });
+
+test('portable save preserves paused state and clamps restored camera', async () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    game.progression.unlockAllLevels();
+    game.startLevel(1);
+    game.state.gameplay.paused = true;
+    const save = game.saves.createSave();
+    save.gameplayState.world.cameraX = 999999;
+    const result = await game.saves.loadSave(JSON.stringify(save));
+    assert.equal(result.loaded, true, result.errors?.join('; '));
+    assert.equal(game.state.gameplay.paused, true);
+    assert.ok(game.world.cameraX >= 0);
+    assert.ok(game.world.cameraX <= Math.max(0, game.world.level.width - 960));
+  } finally {
+    game.dispose();
+    clearEnemies();
+  }
+});
