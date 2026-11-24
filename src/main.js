@@ -33,10 +33,11 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
     bus.on('bonusLife.collected', () => audio.playSound('bonusLife'));
     bus.on('player.damaged', () => audio.playSound('playerDamage'));
     bus.on('checkpoint.activated', () => audio.playSound('checkpoint'));
+    bus.on('level.started', () => audio.playMusic());
     bus.on('boss.started', ({ bossId }) => audio.playBossMusic(bossId));
     bus.on('boss.damaged', () => audio.playSound('bossDamage'));
-    bus.on('boss.defeated', () => { audio.stopMusic(); audio.playSound('bossDefeat'); audio.playVictoryFanfare(); });
-    bus.on('level.completed', () => { audio.playSound('levelComplete'); audio.playVictoryFanfare(); });
+    bus.on('boss.defeated', () => { audio.playSound('bossDefeat'); });
+    bus.on('level.completed', () => { audio.playMusic(); audio.playSound('levelComplete'); audio.playVictoryFanfare(); });
   }
   const saves = new SaveManager({ player, progression, lives, score, powerUps, checkpoints, profile: playerProfile,
     totalLevels: GAME_CONFIG.progression.totalLevels,
@@ -82,10 +83,36 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
   ui?.showMainMenu();
   const keyActions = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', Space: 'jump', ArrowUp: 'jump', KeyW: 'jump', ArrowDown: 'dropThrough', KeyS: 'dropThrough', KeyX: 'shoot', KeyF: 'shoot' };
   const keyTarget = typeof window !== 'undefined' ? window : null;
-  const onKeyDown = event => { if (event.code === 'Escape' && ui) { event.preventDefault(); if (state.gameplay.paused) { state.gameplay.paused = false; if (world.level) ui.showGameplay({ level: world.level.number, world: world.level.world.name }); } else ui.showPauseMenu(); return; } const action = keyActions[event.code]; if (!action || /^(INPUT|TEXTAREA|SELECT)$/.test(event.target?.tagName ?? '')) return; input.setControl(action, true); if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.code)) event.preventDefault(); };
+  const isInteractiveTarget = target => Boolean(target?.closest?.('input,textarea,select,button,a,[contenteditable="true"],[role="button"]'));
+  const onKeyDown = event => {
+    if (event.code === 'Escape' && ui && world.level) {
+      event.preventDefault();
+      if (state.gameplay.paused) {
+        state.gameplay.paused = false;
+        audio?.resumeAudio?.();
+        ui.showGameplay({ level: world.level.number, world: world.level.world.name });
+      } else ui.showPauseMenu();
+      return;
+    }
+    if (isInteractiveTarget(event.target)) return;
+    const action = keyActions[event.code];
+    if (!action) return;
+    input.setControl(action, true);
+    if (['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.code)) event.preventDefault();
+  };
   const onKeyUp = event => { const action = keyActions[event.code]; if (action) input.setControl(action, false); };
+  const onBlur = () => input.releaseAll();
+  const onVisibilityChange = () => {
+    if (typeof document !== 'undefined' && document.hidden) {
+      input.releaseAll();
+      if (world.level && !state.gameplay.paused) ui?.showPauseMenu?.();
+      audio?.pauseAudio?.();
+    }
+  };
   keyTarget?.addEventListener('keydown', onKeyDown);
   keyTarget?.addEventListener('keyup', onKeyUp);
+  keyTarget?.addEventListener('blur', onBlur);
+  if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVisibilityChange);
   systems.push(world);
   function frame(timestamp) {
     if (!running) return;
@@ -109,6 +136,6 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
     start() { if (running || typeof requestAnimationFrame !== 'function') return false; running = true; previous = null; raf = requestAnimationFrame(frame); return true; },
     stop() { running = false; if (raf !== null && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(raf); raf = null; previous = null; input.releaseAll(); },
     async unlockAudio() { return audio?.unlockAudio(); },
-    dispose() { this.stop(); keyTarget?.removeEventListener('keydown', onKeyDown); keyTarget?.removeEventListener('keyup', onKeyUp); world.dispose(); ui?.dispose?.(); audio?.dispose?.(); bus.clear(); }
+    dispose() { this.stop(); keyTarget?.removeEventListener('keydown', onKeyDown); keyTarget?.removeEventListener('keyup', onKeyUp); keyTarget?.removeEventListener('blur', onBlur); if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibilityChange); world.dispose(); ui?.dispose?.(); audio?.dispose?.(); bus.clear(); }
   };
 }
