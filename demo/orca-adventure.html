@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#031b32">
+  <title>Orca Adventure</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%;margin:0;background:#031b32}
+    body{display:grid;place-items:center;overflow:hidden}
+    .game-shell{position:relative;width:min(100vw,177.78vh);aspect-ratio:16/9;max-height:100dvh;overflow:hidden;background:#063b58}
+    #game{display:block;width:100%;height:100%;image-rendering:pixelated}
+    #ui-root{position:absolute;inset:0;overflow:auto}
+    @media(max-aspect-ratio:1/1){.game-shell{width:100vw}}
+  </style>
+</head>
+<body>
+  <main class="game-shell" aria-label="Orca Adventure game">
+    <canvas id="game" width="960" height="540" aria-label="Game playfield"></canvas>
+    <div id="ui-root"></div>
+  </main>
+  <script type="module">
+    import { createGameRuntime } from '../src/main.js';
+
+    const canvas = document.querySelector('#game');
+    const uiRoot = document.querySelector('#ui-root');
+    const game = createGameRuntime({ canvas, uiRoot });
+    game.start();
+
+    let audioUnlocked = false;
+    const unlockAudio = () => {
+      if (audioUnlocked) return;
+      audioUnlocked = true;
+      game.unlockAudio();
+    };
+    uiRoot.addEventListener('pointerdown', unlockAudio, { once: true });
+    window.addEventListener('keydown', unlockAudio, { once: true });
+    window.addEventListener('pagehide', () => game.dispose(), { once: true });
+    window.orcaAdventure = game;
+  </script>
+</body>
+</html>
