@@ -136,7 +136,7 @@ export class WorldSystem {
     const boss = level.boss ? getBoss(level.boss.world) : null;
     const exit = level.exit;
     const atExit = intersects(this.playerCombatant.getBounds(), exit);
-    if (atExit && (!level.boss || boss?.defeated)) this.#completeLevel(level.boss?.id ?? null);
+    if (atExit && (!level.boss || boss?.defeatEventSent)) this.#completeLevel(level.boss?.id ?? null);
 
     this.hudElapsed += dt;
     if (this.hudElapsed >= 0.25) {
