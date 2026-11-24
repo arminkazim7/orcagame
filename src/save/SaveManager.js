@@ -107,7 +107,7 @@ export class SaveManager {
     }
     if (isObject(input.gameplayState) && input.gameplayState.world !== undefined && input.gameplayState.world !== null) {
       const world = input.gameplayState.world;
-      if (!isObject(world) || !isInt(world.level, 1, this.totalLevels) ||
+      if (!isObject(world) || !isInt(world.level, 1, this.totalLevels) || !input.progression?.unlockedLevels?.includes(world.level) ||
           typeof world.elapsed !== 'number' || !Number.isFinite(world.elapsed) || world.elapsed < 0 ||
           typeof world.cameraX !== 'number' || !Number.isFinite(world.cameraX) || world.cameraX < 0 ||
           typeof world.completed !== 'boolean' || !Array.isArray(world.collectibles) ||
