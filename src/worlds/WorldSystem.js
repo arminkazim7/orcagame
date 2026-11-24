@@ -1,0 +1,232 @@
+import { createLevel } from './levels.js';
+import {
+  spawnEnemies, updateEnemies, renderEnemies, spawnBoss, updateBoss,
+  getBoss, clearEnemies, events as enemyEvents
+} from '../enemies/index.js';
+
+const intersects = (a, b) =>
+  a.x < b.x + b.w && a.x + a.w > b.x &&
+  a.y < b.y + b.h && a.y + a.h > b.y;
+
+/** Owns the active level lifecycle and composes player, enemies, bosses and progression. */
+export class WorldSystem {
+  constructor({ canvas, player, state, events, progression, score, lives, powerUps, checkpoints, ui }) {
+    this.canvas = canvas;
+    this.player = player;
+    this.state = state;
+    this.events = events;
+    this.progression = progression;
+    this.score = score;
+    this.lives = lives;
+    this.powerUps = powerUps;
+    this.checkpoints = checkpoints;
+    this.ui = ui;
+    this.level = null;
+    this.cameraX = 0;
+    this.completed = false;
+    this.elapsed = 0;
+    this.hudElapsed = 0;
+    this.playerCombatant = {
+      getBounds: () => ({ x: player.x, y: player.y, w: player.width, h: player.height }),
+      get x() { return player.x; },
+      get y() { return player.y; },
+      get vx() { return player.vx; },
+      get vy() { return player.vy; },
+      isInvulnerable: () => player.isInvulnerable,
+      onDamaged: () => player.takeDamage()
+    };
+    this.unsubscribers = [
+      enemyEvents.on('enemy:defeated', event => {
+        this.events.emit('enemy.defeated', event);
+        this.score.addScore(250);
+      }),
+      enemyEvents.on('enemy:stomped', event => this.events.emit('enemy.stomped', event)),
+      enemyEvents.on('boss:damaged', event => this.events.emit('boss.damaged', event)),
+      enemyEvents.on('boss:defeating', event => this.events.emit('boss.defeating', event)),
+      enemyEvents.on('boss:defeated', event => {
+        this.events.emit('boss.defeated', event);
+        this.#completeLevel(event.bossId);
+      })
+    ];
+    this.events.on('player.damaged', () => {
+      const result = this.lives.loseLife({ reason: 'enemy-hit', levelStart: this.level?.start });
+      if (result.recovered) {
+        this.player.setInvulnerable(1500);
+        this.player.x = result.respawn.x;
+        this.player.y = result.respawn.y;
+        this.ui?.showRecoveryScreen?.();
+      }
+    });
+  }
+
+  startLevel(number) {
+    const level = createLevel(number);
+    this.progression.setCurrentLevel(number);
+    clearEnemies();
+    this.level = level;
+    this.completed = false;
+    this.elapsed = 0;
+    this.cameraX = 0;
+    this.state.status = 'playing';
+    this.state.gameplay.paused = false;
+    this.state.gameplay.elapsedSeconds = 0;
+    this.state.gameplay.cameraX = 0;
+    this.checkpoints.clear();
+    this.lives.levelStart = { ...level.start };
+    this.player.x = level.start.x;
+    this.player.y = level.start.y;
+    this.player.vx = 0;
+    this.player.vy = 0;
+    this.player.grounded = false;
+    this.player.alive = true;
+    this.player.projectiles.clear();
+    this.player.physics.gravity = level.gravity;
+    this.player.setInvulnerable(900);
+    spawnEnemies({
+      level: number,
+      difficulty: this.progression.difficulty,
+      platforms: level.platforms.filter(platform => platform.oneWay)
+    });
+    if (level.boss) {
+      spawnBoss({
+        world: level.boss.world,
+        difficulty: this.progression.difficulty,
+        arena: level.boss.arena
+      });
+      this.events.emit('boss.started', { bossId: level.boss.id, world: level.boss.world });
+    }
+    this.ui?.mountMobileControls?.();
+    this.ui?.updateHUD?.({ level: number, world: level.world.name, difficulty: this.progression.difficulty });
+    this.events.emit('level.started', { level: number, world: level.world.id });
+    return level;
+  }
+
+  update(dt, state, events, input) {
+    if (!this.level || this.completed || state.gameplay.paused) return;
+    this.elapsed += dt;
+    const level = this.level;
+    this.player.update(dt, input, level.platforms, {
+      projectileBounds: { left: 0, right: level.width }
+    });
+    this.player.x = Math.max(0, Math.min(level.width - this.player.width, this.player.x));
+    this.cameraX = Math.max(0, Math.min(level.width - (this.canvas?.width ?? 960),
+      this.player.x - (this.canvas?.width ?? 960) * 0.36));
+    state.gameplay.cameraX = this.cameraX;
+
+    const world = {
+      player: this.playerCombatant,
+      platforms: level.platforms,
+      playerProjectiles: this.player.projectiles.items,
+      gravity: level.gravity,
+      bounds: { w: level.width, h: level.height }
+    };
+    updateEnemies(dt, world);
+    if (level.boss) updateBoss(dt, world);
+
+    for (const item of level.collectibles) {
+      if (item.collected) continue;
+      const bounds = { x: item.x, y: item.y, w: 30, h: 30 };
+      if (!intersects(this.playerCombatant.getBounds(), bounds)) continue;
+      item.collected = true;
+      if (item.type === 'powerup') this.powerUps.collectPowerUp(item.powerUp);
+      else if (item.type === 'life') this.lives.collectBonusLife(item);
+      else if (item.type === 'checkpoint') this.checkpoints.activateCheckpoint({ id: item.id, x: item.x, y: item.y - this.player.height, level: level.number });
+    }
+
+    const boss = level.boss ? getBoss(level.boss.world) : null;
+    const exit = level.exit;
+    const atExit = intersects(this.playerCombatant.getBounds(), exit);
+    if (atExit && (!level.boss || boss?.defeated)) this.#completeLevel(level.boss?.id ?? null);
+
+    this.hudElapsed += dt;
+    if (this.hudElapsed >= 0.25) {
+      this.hudElapsed = 0;
+      this.ui?.updateHUD?.({
+        level: level.number, world: level.world.name,
+        difficulty: this.progression.difficulty,
+        bossHealth: boss && !boss.defeated ? boss.health / boss.maxHealth * 100 : null
+      });
+    }
+  }
+
+  #completeLevel(bossId = null) {
+    if (this.completed || !this.level) return false;
+    this.completed = true;
+    const result = this.progression.completeLevel({
+      level: this.level.number,
+      difficulty: this.progression.difficulty,
+      score: this.score.getScore(),
+      time: this.elapsed,
+      bossId
+    });
+    this.state.status = 'victory';
+    this.player.triggerVictoryAnimation(this.level.number === 15 ? 'grand victory leap' : null);
+    this.events.emit('level.completed', result);
+    this.ui?.showVictory?.({ level: this.level.number, playerName: this.player.name });
+    return result;
+  }
+
+  render(ctx) {
+    if (!this.level) {
+      ctx.fillStyle = '#063b58';
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      this.player.render(ctx, 0);
+      return;
+    }
+    const level = this.level;
+    const [top, bottom] = level.background;
+    const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+    gradient.addColorStop(0, top);
+    gradient.addColorStop(1, bottom);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    // Underwater light shafts and bubbles provide depth without obscuring play.
+    for (let i = 0; i < 12; i++) {
+      const x = ((i * 173 - this.cameraX * 0.18) % (ctx.canvas.width + 100) + ctx.canvas.width + 100) % (ctx.canvas.width + 100);
+      ctx.fillStyle = 'rgba(210,245,255,0.045)';
+      ctx.fillRect(x, 0, 22, ctx.canvas.height);
+      ctx.strokeStyle = 'rgba(210,245,255,0.22)';
+      ctx.beginPath();
+      ctx.arc(x + 38, 75 + (i * 31) % 330, 3 + i % 4, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.save();
+    ctx.translate(-this.cameraX, 0);
+    for (const platform of level.platforms) {
+      if (platform.id === 'seafloor') {
+        ctx.fillStyle = '#143d48';
+        ctx.fillRect(platform.x, platform.y, platform.w, platform.h);
+        ctx.fillStyle = '#4eb7a1';
+        ctx.fillRect(platform.x, platform.y, platform.w, 8);
+      } else {
+        ctx.fillStyle = '#236f70';
+        ctx.fillRect(platform.x, platform.y, platform.w, platform.h);
+        ctx.fillStyle = '#70d8c2';
+        ctx.fillRect(platform.x, platform.y, platform.w, 5);
+      }
+    }
+    ctx.fillStyle = '#e9d58a';
+    ctx.fillRect(level.exit.x, level.exit.y, level.exit.w, level.exit.h);
+    ctx.fillStyle = '#174f61';
+    ctx.fillRect(level.exit.x + 10, level.exit.y + 10, level.exit.w - 20, level.exit.h - 10);
+    for (const item of level.collectibles) {
+      if (item.collected) continue;
+      ctx.beginPath();
+      ctx.fillStyle = item.type === 'life' ? '#ffdf71' : item.type === 'checkpoint' ? '#fff' : '#8ff7ff';
+      ctx.arc(item.x + 15, item.y + 15, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.7)';
+      ctx.stroke();
+    }
+    ctx.restore();
+    this.player.render(ctx, this.cameraX);
+    renderEnemies(ctx, { x: this.cameraX, y: 0 });
+  }
+
+  dispose() {
+    for (const unsubscribe of this.unsubscribers) unsubscribe?.();
+    clearEnemies();
+  }
+}
