@@ -19,7 +19,7 @@ npm install
 npm run build
 ```
 
-The test suite is rooted in the repository-level `tests/` directory. The latest GitHub Actions run passed **186 tests with 0 failures**, and the runtime syntax checks passed. Coverage includes the composition root, world layouts, runtime level startup, UI, player, progression, audio, save/load, and engine modules. The build writes a self-contained `dist/orca-adventure.html` with bundled JavaScript and inline CSS. GitHub Actions uploads it as the `orca-adventure-html` artifact. Browser playtesting is still a release gate.
+The test suite is rooted in the repository-level `tests/` directory. The latest GitHub Actions run passed **187 tests with 0 failures**, and the runtime syntax checks passed. Coverage includes the composition root, world layouts, runtime level startup, UI, player, progression, audio, save/load, and engine modules. The build writes a self-contained `dist/orca-adventure.html` with bundled JavaScript and inline CSS. GitHub Actions uploads it as the `orca-adventure-html` artifact. Browser playtesting is still a release gate.
 
 ## Runtime API
 
