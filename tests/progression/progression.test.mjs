@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PowerUpManager, LifeManager, ScoreManager, CheckpointManager, ProgressionManager } from '../src/progression/index.js';
+import { PowerUpManager, LifeManager, ScoreManager, CheckpointManager, ProgressionManager } from '../../src/progression/index.js';
 
 class Events {
   listeners = new Map(); emitted = [];
