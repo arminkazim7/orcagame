@@ -41,16 +41,18 @@ export class WorldSystem {
         this.score.addScore(250);
       }),
       enemyEvents.on('enemy:stomped', event => { this.player.vy = -300; this.player.grounded = false; this.events.emit('enemy.stomped', event); }),
-      enemyEvents.on('boss:damaged', event => this.events.emit('boss.damaged', event)),
-      enemyEvents.on('boss:defeating', event => this.events.emit('boss.defeating', event)),
+      enemyEvents.on('boss:damaged', event => this.events.emit('boss.damaged', { ...event, bossId: this.level?.boss?.id ?? event.bossId })),
+      enemyEvents.on('boss:defeating', event => this.events.emit('boss.defeating', { ...event, bossId: this.level?.boss?.id ?? event.bossId })),
       enemyEvents.on('boss:defeated', event => {
-        this.events.emit('boss.defeated', event);
-        this.#completeLevel(event.bossId);
+        const bossId = this.level?.boss?.id ?? event.bossId;
+        this.events.emit('boss.defeated', { ...event, bossId });
+        this.#completeLevel(bossId);
       })
     ];
     this.events.on('player.damaged', () => {
       const result = this.lives.loseLife({ reason: 'enemy-hit', levelStart: this.level?.start });
       if (result.recovered) {
+        this.state.gameplay.paused = true;
         this.player.setInvulnerable(1500);
         this.player.x = result.respawn.x;
         this.player.y = result.respawn.y;
