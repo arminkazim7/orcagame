@@ -191,7 +191,11 @@ export class WorldSystem {
         !snapshot.encounter || typeof snapshot.encounter !== 'object') {
       throw new TypeError('Invalid saved world state');
     }
+    const savedLevelStart = this.lives?.levelStart ? { ...this.lives.levelStart } : null;
+    const savedCheckpoint = this.checkpoints?.serialize?.() ?? null;
     this.startLevel(snapshot.level);
+    if (savedLevelStart && this.lives) this.lives.levelStart = savedLevelStart;
+    if (savedCheckpoint !== null) this.checkpoints?.deserialize?.(savedCheckpoint);
     this.elapsed = snapshot.elapsed;
     this.cameraX = Math.min(this.level.width - (this.canvas?.width ?? 960), snapshot.cameraX);
     this.state.gameplay.cameraX = this.cameraX;
