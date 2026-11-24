@@ -7,7 +7,7 @@ import {
   pointInRect,
   circlesOverlap,
   circleRectOverlap,
-} from '../Collision.js';
+} from '../src/engine/Collision.js';
 
 const rect = (x, y, width, height) => ({ x, y, width, height });
 

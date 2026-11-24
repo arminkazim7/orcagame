@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Renderer } from '../Renderer.js';
-import { Camera } from '../Camera.js';
+import { Renderer } from '../src/engine/Renderer.js';
+import { Camera } from '../src/engine/Camera.js';
 import { fakeCanvas, fakeWindow } from './helpers.js';
 
 function make(opts = {}, win = {}) {

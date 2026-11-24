@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Entity, Scene } from '../GameEngine.js';
+import { Entity, Scene } from '../src/engine/GameEngine.js';
 import { makeEngine, run, key } from './helpers.js';
 
 const STEP = 1 / 60;

@@ -1,5 +1,5 @@
 // Shared fakes so the engine can run headless under node:test.
-import { GameEngine } from '../GameEngine.js';
+import { GameEngine } from '../src/engine/GameEngine.js';
 
 /** A 2D context that records calls and ignores property reads/writes. */
 export function fakeContext() {

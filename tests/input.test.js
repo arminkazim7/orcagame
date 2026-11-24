@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { InputManager } from '../InputManager.js';
+import { InputManager } from '../src/engine/InputManager.js';
 import { key, touch } from './helpers.js';
 
 function setup(options = {}) {
