@@ -68,3 +68,18 @@ test('portable save preserves paused state and clamps restored camera', async ()
     clearEnemies();
   }
 });
+
+test('portable save restores the selected character and its animation profile', async () => {
+  const game=createGameRuntime({audioEnabled:false});
+  try {
+    game.player.customize({name:'Tentacle',characterType:'octopus'});
+    const save=game.saves.createSave();
+    assert.equal(save.player.characterType,'octopus');
+    assert.equal(save.gameplayState.player.characterType,'octopus');
+    game.player.customize({characterType:'raccoon'});
+    const result=await game.saves.loadSave(JSON.stringify(save));
+    assert.equal(result.loaded,true,result.errors?.join('; '));
+    assert.equal(game.player.characterType,'octopus');
+    assert.equal(game.player.animation.characterType,'octopus');
+  } finally { game.dispose(); clearEnemies(); }
+});
