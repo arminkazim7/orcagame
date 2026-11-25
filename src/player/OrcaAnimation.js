@@ -9,7 +9,7 @@ const TAU = Math.PI * 2;
 const clamp01 = n => Math.max(0, Math.min(1, n));
 
 export class OrcaAnimation {
-  constructor() { this.time = 0; this.victory = null; this.lastPose = null; }
+  constructor({ characterType = 'orca' } = {}) { this.time = 0; this.victory = null; this.lastPose = null; this.characterType = characterType; }
 
   trigger(name, duration = 2.8) {
     const normalized = String(name).toLowerCase();
@@ -58,9 +58,12 @@ export class OrcaAnimation {
   getMotionPose(state, facing = 1) {
     if (this.victory) return this.getVictoryPose();
     const phase = this.time * (state === 'swim' ? 9 : 4);
-    return { name: state, rotation: state === 'jump' ? -0.12 : state === 'fall' ? 0.12 : 0,
-      tail: Math.sin(phase) * (state === 'idle' ? .16 : .58), fin: Math.sin(phase + Math.PI / 2) * .22,
-      dy: state === 'swim' ? Math.sin(phase) * 2.5 : 0, dx: 0, scale: 1, bubbles: false, splash: false, rings: false, spin: false, facing };
+    const swim = state === 'swim', idle = state === 'idle', jump = state === 'jump', fall = state === 'fall';
+    if (this.characterType === 'raccoon') return { name: state, rotation: jump ? -.2 : fall ? .18 : Math.sin(phase)*.04, tail: Math.sin(phase)* (idle?.12:.75), fin: 0, dx:0, dy: swim?Math.sin(phase)*2:0, scale:1, bubbles:false,splash:false,rings:false,spin:false, legs:Math.sin(phase)*.55, paws:Math.sin(phase+1)*.4, facing };
+    if (this.characterType === 'octopus') return { name:state, rotation: jump?-.16:fall?.14:Math.sin(phase)*.06, tail:0, fin:0, dx:0, dy:swim?Math.sin(phase)*4:idle?Math.sin(phase)*2:0, scale:1, bubbles:swim, splash:false,rings:false,spin:false, tentacles:Math.sin(phase)*.65, curl:Math.sin(phase+1)*.4, facing };
+    return { name: state, rotation: jump ? -0.12 : fall ? 0.12 : 0,
+      tail: Math.sin(phase) * (idle ? .16 : .58), fin: Math.sin(phase + Math.PI / 2) * .22,
+      dy: swim ? Math.sin(phase) * 2.5 : 0, dx: 0, scale: 1, bubbles: false, splash: false, rings: false, spin: false, facing };
   }
 
   renderEffects(ctx, x, y, width, pose) {
