@@ -23,12 +23,12 @@ export class SaveManager {
     const scoreState = this.score?.serialize?.() ?? { score: 0, nextThreshold: 10000, awardedThresholds: [], threshold: 10000 };
     const powerState = this.powerUps?.serialize?.() ?? { active: null, protectionHits: 0 };
     const checkpoint = this.checkpoints?.serialize?.() ?? null;
-    const profile = { name: this.profile?.name ?? 'Player', colour: this.profile?.colour ?? '#168AAD', characterType: this.profile?.characterType ?? this.player?.characterType ?? 'orca', ...(overrides.profile ?? {}) };
+    const profile = { name: this.profile?.name ?? 'Player', colour: this.profile?.colour ?? '#168AAD', characterType: this.profile?.characterType ?? this.player?.characterType ?? 'orca', badges: [...(this.profile?.badges ?? [])], ...(overrides.profile ?? {}) };
     const customGameplay = overrides.gameplayState ?? this.getGameplayState?.() ?? {};
     const gameplayState = { ...clone(customGameplay), player: customGameplay?.player ?? capturePlayer(this.player) };
     const save = {
       version: SAVE_VERSION, savedAt: new Date().toISOString(),
-      player: { name: profile.name, colour: profile.colour, characterType: profile.characterType },
+      player: { name: profile.name, colour: profile.colour, characterType: profile.characterType, badges: [...profile.badges] },
       difficulty: progression.difficulty ?? 'easy', cheatUnlocked: Boolean(progression.cheatUnlocked ?? this.profile?.cheatUnlocked ?? false),
       progression: {
         totalLevels: progression.totalLevels ?? this.totalLevels, currentLevel: progression.currentLevel ?? 1,
@@ -60,6 +60,7 @@ export class SaveManager {
       if (typeof input.player.name !== 'string' || !input.player.name.trim() || input.player.name.length > 32) fail('player.name must be 1–32 characters');
       if (typeof input.player.colour !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(input.player.colour)) fail('player.colour must be a six-digit hex colour');
       if (input.player.characterType !== undefined && !['orca','raccoon','octopus'].includes(input.player.characterType)) fail('player.characterType is invalid');
+      if (input.player.badges !== undefined && (!Array.isArray(input.player.badges) || input.player.badges.length > 15 || !input.player.badges.every(n => isInt(n,1,15)) || new Set(input.player.badges).size !== input.player.badges.length)) fail('player.badges must contain unique level numbers 1–15');
     }
     if (!['easy', 'hard'].includes(input.difficulty)) fail('difficulty must be easy or hard');
     if (typeof input.cheatUnlocked !== 'boolean') fail('cheatUnlocked must be boolean');
@@ -153,7 +154,7 @@ export class SaveManager {
       this.checkpoints?.deserialize?.(input.checkpoint);
       this.powerUps?.deserialize?.({ active: input.activePowerUp, protectionHits: input.powerUpProtectionHits });
       if (input.gameplayState.player && this.player) restorePlayer(this.player, input.gameplayState.player);
-      if (this.profile) { this.profile.name = input.player.name; this.profile.colour = input.player.colour; this.profile.characterType = input.player.characterType ?? 'orca'; this.profile.cheatUnlocked = input.cheatUnlocked; }
+      if (this.profile) { this.profile.name = input.player.name; this.profile.colour = input.player.colour; this.profile.characterType = input.player.characterType ?? 'orca'; this.profile.badges = [...(input.player.badges ?? [])]; this.profile.cheatUnlocked = input.cheatUnlocked; }
       this.setGameplayState?.(clone(input.gameplayState));
       return { applied: true, version: input.version };
     } catch (error) {
