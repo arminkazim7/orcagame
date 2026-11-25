@@ -55,6 +55,8 @@ The runtime exposes `player`, `progression`, `score`, `lives`, `powerUps`, `chec
 
 Keyboard controls: arrows or A/D to move, Space/Up to jump, Down/S to drop through one-way platforms, X/F to shoot, and Escape to pause/resume. Touch controls are mounted during gameplay.
 
+Character selection: choose Orca, Raccoon, or Octopus from the Character dropdown during setup. Each character has a distinct rendered body and movement animation profile (orca tail/fin swim, raccoon tail-and-paw motion, octopus eight tentacle waves). The selected character is included in portable saves.
+
 ## Source map
 
 - `src/worlds/` — campaign layouts and playable world lifecycle
