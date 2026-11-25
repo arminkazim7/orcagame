@@ -92,3 +92,5 @@ test('player horizontal movement is blocked by live enemy colliders', () => {
 
 
 test('enemy contact damage deducts a life through the runtime event bridge',()=>{const game=createGameRuntime({audioEnabled:false});try{game.startLevel(1);const enemy=getEnemyState().enemies[0];enemy.speed=0;enemy.vy=0;enemy.touchCooldown=0;game.player.setInvulnerable(0);enemy.x=game.player.x;enemy.y=game.player.y;enemy.patrolMin=enemy.x;enemy.patrolMax=enemy.x+enemy.w;const before=game.lives.getLives();game.world.update(1/60,game.state,game.events,game.input);assert.equal(game.lives.getLives(),before-1);assert.ok(game.player.invulnerabilityMs>0);}finally{game.dispose();clearEnemies();}});
+
+test('each campaign level contains one unique badge collectible',()=>{for(let n=1;n<=15;n++){const level=createLevel(n);const badges=level.collectibles.filter(i=>i.type==='badge');assert.equal(badges.length,1);assert.equal(badges[0].badgeId,n);assert.equal(badges[0].id,'badge-'+n);assert.ok(level.platforms.some(p=>badges[0].x>=p.x&&badges[0].x+30<=p.x+p.w));}});
