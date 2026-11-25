@@ -46,23 +46,27 @@ export class UIManager {
   #stopPreview(){if(this._previewFrame!==undefined&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(this._previewFrame);this._previewFrame=undefined;this._previewPlayer=null;}
   #drawPreview(canvas, colour='classic', characterType=this.characterType??'orca') { if(!canvas)return; this.#stopPreview(); const ctx=canvas.getContext('2d'); const preview=new Orca({x:87,y:55,name:'Preview',color:colour,characterType}); preview.animationState='swim'; this._previewPlayer=preview; const draw=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#0a5970';ctx.fillRect(0,0,canvas.width,canvas.height);for(let i=0;i<8;i++){ctx.fillStyle='rgba(180,245,255,.22)';ctx.fillRect((i*37+13)%230,(i*23+8)%140,3,3);}preview.render(ctx,0);};draw();if(typeof requestAnimationFrame==='function'){let previous=0;const animate=now=>{if(!this._previewPlayer||this._previewPlayer!==preview)return;const dt=previous?Math.min((now-previous)/1000,.05):0;previous=now;preview.animation.update(dt);draw();this._previewFrame=requestAnimationFrame(animate);};this._previewFrame=requestAnimationFrame(animate);} }
   showWorldMap() {
-    const p = this.#state(); const completed = p.completedLevels ?? {}; const unlocked = new Set(p.unlockedLevels ?? [1]); const gold = new Set(p.goldLevels ?? []);
-    let route = '', nodes = '';
-    const coords = Array.from({length:15},(_,i)=>({x:55+(i%3)*135+(Math.floor(i/3)%2?24:0),y:55+Math.floor(i/3)*88}));
-    route = coords.map((c,i)=>i?`L ${c.x} ${c.y}`:`M ${c.x} ${c.y}`).join(' ');
-    const worlds = GAME_CONFIG.worlds;
-    worlds.forEach((world, wi) => {
-      nodes += `<div class="orca-world-label" style="--world-row:${wi}">${esc(world.name)}</div>`;
-      world.levels.forEach(level => {
-        const c=coords[level-1], done=completed[level] ?? completed[String(level)] ?? {}, status=gold.has(level)||done.hard?'gold':done.easy?'green':unlocked.has(level)?'available':'locked';
-        nodes += `<button type="button" class="map-node ${status}" style="left:${c.x/510*100}%;top:${c.y/490*100}%" data-action="level" data-level="${level}" ${status==='locked'?'disabled':''} aria-label="Level ${level}, ${status}"><b>${String(level).padStart(2,'0')}</b></button>`;
+    const p=this.#state(), completed=p.completedLevels??{}, unlocked=new Set(p.unlockedLevels??[1]), gold=new Set(p.goldLevels??[]);
+    const worlds=GAME_CONFIG.worlds, coords=[], routeParts=[]; let nodes='', totalDone=0, totalGold=0;
+    worlds.forEach((world,wi)=>{
+      const y=58+wi*91, regionTop=wi*20;
+      nodes+=`<div class="map-region" style="top:${regionTop}%;--region-index:${wi}"></div><div class="orca-world-label" style="--world-row:${wi}"><span>WORLD 0${wi+1}</span><b>${esc(world.name)}</b></div>`;
+      world.levels.forEach((level,li)=>{
+        const c={x:76+li*128,y}; coords[level-1]=c;
+        const done=completed[level]??completed[String(level)]??{}, isGold=gold.has(level)||!!done.hard, isGreen=!!done.easy;
+        const status=isGold?'gold':isGreen?'green':unlocked.has(level)?'available':'locked';
+        if(isGold||isGreen)totalDone++; if(isGold)totalGold++;
+        nodes+=`<button type="button" class="map-node ${status}" style="left:${c.x/510*100}%;top:${c.y/490*100}%" data-action="level" data-level="${level}" ${status==='locked'?'disabled':''} aria-label="Level ${level}, ${status}"><b>${String(level).padStart(2,'0')}</b><small>${status==='gold'?'GOLD':status==='green'?'CLEAR':status==='available'?'DIVE':'LOCKED'}</small></button>`;
       });
-      const bossLevel=world.levels[2], c=coords[bossLevel-1], bossId=world.bossId, bossOpen=(p.unlockedBosses??[]).includes(bossId), bossDone=(p.defeatedBosses??[]).includes(bossId);
-      nodes += `<span class="map-boss ${bossDone?'defeated':bossOpen?'open':'locked'}" style="left:${Math.min(94,c.x/510*100+9)}%;top:${c.y/490*100+2}%" title="${esc(bossId)}">♛</span>`;
+      const bossLevel=world.levels[2],c=coords[bossLevel-1],bossId=world.bossId,bossOpen=(p.unlockedBosses??[]).includes(bossId),bossDone=(p.defeatedBosses??[]).includes(bossId);
+      nodes+=`<div class="map-boss-wrap" style="left:88%;top:${c.y/490*100}%" title="${esc(bossId)}"><span class="map-boss ${bossDone?'defeated':bossOpen?'open':'locked'}">${bossDone?'✦':'♛'}</span><small>BOSS</small></div>`;
     });
-    const legend = `<div class="map-legend"><span><i class="gold"></i> Hard complete</span><span><i class="green"></i> Easy complete</span><span><i class="available"></i> Available</span><span><i class="locked"></i> Locked</span></div>`;
-    const cheat = p.orcalordUnlocked ? `<p class="orca-cheat">ORCALORD ACCESS UNLOCKED</p>` : '';
-    return this.#shell('World Map', `<p class="orca-lead">Follow the connected route through all five worlds.</p><div class="orca-map"><svg viewBox="0 0 510 490" preserveAspectRatio="none" aria-hidden="true"><path d="${route}"/></svg>${nodes}</div>${legend}${cheat}<div class="orca-actions">${this.#button('Return','menu')}</div>`,'15 LEVELS · 5 BOSSES');
+    const allCoords=worlds.flatMap(w=>w.levels.map(level=>coords[level-1]));
+    const route=allCoords.map((c,i)=>i?`L ${c.x} ${c.y}`:`M ${c.x} ${c.y}`).join(' ');
+    const legend=`<div class="map-legend"><span><i class="gold"></i> Hard / Gold</span><span><i class="green"></i> Easy cleared</span><span><i class="available"></i> Ready</span><span><i class="locked"></i> Locked</span><span><i class="boss-key">♛</i> World boss</span></div>`;
+    const cheat=p.orcalordUnlocked?`<p class="orca-cheat">ORCALORD ACCESS UNLOCKED</p>`:'';
+    const progress=Math.round(totalDone/15*100);
+    return this.#shell('World Map',`<div class="map-intro"><p class="orca-lead">Chart your route through five regions of the deep. Clear levels, earn Gold, and face each world guardian.</p><div class="map-progress"><div><b>${totalDone}/15</b><small>LEVELS CLEARED</small></div><div><b>${totalGold}</b><small>GOLD CLEAR</small></div><div><b>5</b><small>WORLD BOSSES</small></div><div class="map-progress-bar"><i style="--progress:${progress}%"></i></div></div></div><div class="orca-map map-atlas"><div class="map-grid" aria-hidden="true"></div><svg viewBox="0 0 510 490" preserveAspectRatio="none" aria-hidden="true"><path class="map-route-shadow" d="${route}"/><path class="map-route" d="${route}"/></svg>${nodes}<div class="map-compass" aria-hidden="true">N<br>✧</div><div class="map-depth" aria-hidden="true">ABYSSAL EXPEDITION · 00–5000m</div></div>${legend}${cheat}<div class="orca-actions">${this.#button('Return','menu')}</div>`,'EXPEDITION ATLAS · 15 LEVELS · 5 BOSSES');
   }
   updateHUD(data = {}) {
     const state = this.runtime.state, prog = this.#state(), milestone = this.runtime.score.getMilestoneProgress();
