@@ -57,3 +57,6 @@ test('character setup includes orca raccoon and octopus with selected-character 
   assert.ok(root.innerHTML.includes('value="octopus"'));
   assert.ok(root.innerHTML.includes('Quick paws and agile movement'));
 });
+
+test('gameplay HUD has a profile badge collection button and profile page shows all 15 badges',()=>{const {root,runtime,ui}=fixture();ui.showGameplay({level:4,world:'Kelp Forest'});assert.match(root.innerHTML,/data-action="profile"/);ui.showProfile();assert.equal((root.innerHTML.match(/class="badge-card/g)||[]).length,15);assert.match(root.innerHTML,/0\/15 collected|0\/15 collected/i);runtime.profile.badges.push(4);ui.showProfile();assert.match(root.innerHTML,/LEVEL 4 · Kelp Forest/);assert.match(root.innerHTML,/COLLECTED/);});
+test('profile button opens collection and return resumes gameplay',()=>{const {root,runtime,ui}=fixture();ui.showGameplay({level:2,world:'Coral Cove'});root.listeners.click({target:{closest:()=>({dataset:{action:'profile'}})}});assert.equal(runtime.state.gameplay.paused,true);assert.match(root.innerHTML,/Player Profile/);root.listeners.click({target:{closest:()=>({dataset:{action:'profile-back'}})}});assert.equal(runtime.state.gameplay.paused,false);assert.match(root.innerHTML,/Badges \/ Profile/);});
