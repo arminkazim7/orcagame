@@ -205,11 +205,11 @@ function defeatEnemy(e, meta = {}) {
 }
 
 function emitPlayerDamage(world, amount, meta) {
-  if (typeof world.player.onDamaged === 'function') {
-    world.player.onDamaged(amount, meta.source); // shared-interface hook, optional
-  }
-  // Progression owns lives/rules — we only report the damage.
-  state.events.emit('player:damaged', { amount, ...meta });
+  const applied = typeof world.player.onDamaged === 'function'
+    ? world.player.onDamaged(amount, meta.source) === true
+    : false;
+  // Report only successful damage; invulnerability and protection must not cost lives.
+  if (applied) state.events.emit('player:damaged', { amount, ...meta, applied: true });
 }
 
 // ---------------------------------------------------------------------------
