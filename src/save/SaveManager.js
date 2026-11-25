@@ -23,12 +23,12 @@ export class SaveManager {
     const scoreState = this.score?.serialize?.() ?? { score: 0, nextThreshold: 10000, awardedThresholds: [], threshold: 10000 };
     const powerState = this.powerUps?.serialize?.() ?? { active: null, protectionHits: 0 };
     const checkpoint = this.checkpoints?.serialize?.() ?? null;
-    const profile = { name: this.profile?.name ?? 'Player', colour: this.profile?.colour ?? '#168AAD', ...(overrides.profile ?? {}) };
+    const profile = { name: this.profile?.name ?? 'Player', colour: this.profile?.colour ?? '#168AAD', characterType: this.profile?.characterType ?? this.player?.characterType ?? 'orca', ...(overrides.profile ?? {}) };
     const customGameplay = overrides.gameplayState ?? this.getGameplayState?.() ?? {};
     const gameplayState = { ...clone(customGameplay), player: customGameplay?.player ?? capturePlayer(this.player) };
     const save = {
       version: SAVE_VERSION, savedAt: new Date().toISOString(),
-      player: { name: profile.name, colour: profile.colour },
+      player: { name: profile.name, colour: profile.colour, characterType: profile.characterType },
       difficulty: progression.difficulty ?? 'easy', cheatUnlocked: Boolean(progression.cheatUnlocked ?? this.profile?.cheatUnlocked ?? false),
       progression: {
         totalLevels: progression.totalLevels ?? this.totalLevels, currentLevel: progression.currentLevel ?? 1,
@@ -59,6 +59,7 @@ export class SaveManager {
     else {
       if (typeof input.player.name !== 'string' || !input.player.name.trim() || input.player.name.length > 32) fail('player.name must be 1–32 characters');
       if (typeof input.player.colour !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(input.player.colour)) fail('player.colour must be a six-digit hex colour');
+      if (input.player.characterType !== undefined && !['orca','raccoon','octopus'].includes(input.player.characterType)) fail('player.characterType is invalid');
     }
     if (!['easy', 'hard'].includes(input.difficulty)) fail('difficulty must be easy or hard');
     if (typeof input.cheatUnlocked !== 'boolean') fail('cheatUnlocked must be boolean');
@@ -130,7 +131,7 @@ export class SaveManager {
         else {
           for (const key of ['x', 'y', 'vx', 'vy', 'rotation']) if (ps[key] !== undefined && (typeof ps[key] !== 'number' || !Number.isFinite(ps[key]) || Math.abs(ps[key]) > 1e7)) fail(`gameplayState.player.${key} is invalid`);
           if (ps.grounded !== undefined && typeof ps.grounded !== 'boolean') fail('gameplayState.player.grounded must be boolean');
-          for (const key of ['facing', 'animationState']) if (ps[key] !== undefined && typeof ps[key] !== 'string') fail(`gameplayState.player.${key} must be a string`);
+          for (const key of ['facing', 'animationState', 'characterType']) if (ps[key] !== undefined && typeof ps[key] !== 'string') fail(`gameplayState.player.${key} must be a string`);
         }
       }
       try { const encoded = JSON.stringify(input.gameplayState); if (encoded === undefined || encoded.length > this.limits.maxGameplayBytes) fail('gameplayState is not serializable or exceeds size limit'); }
@@ -152,7 +153,7 @@ export class SaveManager {
       this.checkpoints?.deserialize?.(input.checkpoint);
       this.powerUps?.deserialize?.({ active: input.activePowerUp, protectionHits: input.powerUpProtectionHits });
       if (input.gameplayState.player && this.player) restorePlayer(this.player, input.gameplayState.player);
-      if (this.profile) { this.profile.name = input.player.name; this.profile.colour = input.player.colour; this.profile.cheatUnlocked = input.cheatUnlocked; }
+      if (this.profile) { this.profile.name = input.player.name; this.profile.colour = input.player.colour; this.profile.characterType = input.player.characterType ?? 'orca'; this.profile.cheatUnlocked = input.cheatUnlocked; }
       this.setGameplayState?.(clone(input.gameplayState));
       return { applied: true, version: input.version };
     } catch (error) {
@@ -218,5 +219,6 @@ function restorePlayer(player, state) {
   for (const key of ['x', 'y', 'vx', 'vy', 'rotation']) if (state[key] !== undefined && (typeof state[key] !== 'number' || !Number.isFinite(state[key]) || Math.abs(state[key]) > 1e7)) throw new TypeError(`Invalid player ${key}`);
   for (const key of ['grounded']) if (state[key] !== undefined && typeof state[key] !== 'boolean') throw new TypeError(`Invalid player ${key}`);
   for (const key of ['facing', 'animationState']) if (state[key] !== undefined && typeof state[key] !== 'string') throw new TypeError(`Invalid player ${key}`);
+  if (state.characterType !== undefined && !['orca','raccoon','octopus'].includes(state.characterType)) throw new TypeError('Invalid player characterType');
   Object.assign(player, state);
 }
