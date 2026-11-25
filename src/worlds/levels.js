@@ -23,7 +23,10 @@ export function createLevel(levelNumber) {
       w, h: 18, oneWay: true
     }))
   ];
+  const badgePlatform = platforms[1 + (number % (platforms.length - 1))];
+  const badge = { id: `badge-${number}`, type: 'badge', badgeId: number, x: badgePlatform.x + Math.floor(badgePlatform.w / 2) - 15, y: badgePlatform.y - 38 };
   const collectibles = [
+    badge,
     { id: `berry-${number}`, type: 'powerup', powerUp: 'sea-berry', x: 650 + (number % 3) * 35, y: 365 },
     { id: `krill-${number}`, type: 'powerup', powerUp: 'golden-krill', x: 2140, y: 365 },
     { id: `bubble-${number}`, type: 'powerup', powerUp: 'bubble-shell', x: 3540, y: 365 },
