@@ -181,8 +181,19 @@ export class SaveManager {
     if (typeof document === 'undefined' || typeof URL === 'undefined' || typeof Blob === 'undefined') throw new Error('downloadSave requires a browser environment');
     const blob = new Blob([JSON.stringify(save, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    try { const link = document.createElement('a'); link.href = url; link.download = filename; link.style.display = 'none'; document.body.appendChild(link); link.click(); link.remove(); }
-    finally { URL.revokeObjectURL(url); }
+    try {
+      const link = document.createElement('a');
+      link.href = url; link.download = filename; link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      URL.revokeObjectURL(url);
+      throw error;
+    }
+    // Do not revoke the object URL in the same task as click(): browsers may
+    // not have consumed the download yet, which can produce an empty/no file.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     return { downloaded: true, filename };
   }
 
