@@ -19,11 +19,13 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
   const score = new ScoreManager({ lives, events: bus });
   const progression = new ProgressionManager({ events: bus, totalLevels: GAME_CONFIG.progression.totalLevels, bossUnlocks: BOSS_UNLOCKS, orcalordRequiresAllHard: true });
   const paletteHex = { classic: '#101820', midnight: '#142d50', teal: '#075b62', rose: '#553448', gold: '#56451b' };
+  const badgeCollection = [...new Set((profile.badges ?? []).filter(n => Number.isInteger(n) && n >= 1 && n <= GAME_CONFIG.progression.totalLevels))];
   const playerProfile = Object.defineProperties({}, {
     name: { enumerable: true, get: () => player.name, set: value => player.customize({ name: value }) },
     colour: { enumerable: true, get: () => paletteHex[player.color] ?? paletteHex.classic, set: value => { const match = Object.entries(paletteHex).find(([, hex]) => hex.toLowerCase() === String(value).toLowerCase()); player.customize({ color: match?.[0] ?? 'classic' }); } },
     characterType: { enumerable: true, get: () => player.characterType, set: value => player.customize({ characterType: value }) },
-    cheatUnlocked: { enumerable: true, get: () => Boolean(state.progression.cheatUnlocked), set: value => { state.progression.cheatUnlocked = Boolean(value); } }
+    cheatUnlocked: { enumerable: true, get: () => Boolean(state.progression.cheatUnlocked), set: value => { state.progression.cheatUnlocked = Boolean(value); } },
+    badges: { enumerable: true, get: () => badgeCollection, set: value => { badgeCollection.splice(0, badgeCollection.length, ...[...new Set((value ?? []).filter(n => Number.isInteger(n) && n >= 1 && n <= GAME_CONFIG.progression.totalLevels))]; } }
   });
   const audio = audioEnabled ? new AudioManager({ musicEnabled: state.settings.musicEnabled, soundEnabled: state.settings.soundEnabled }) : null;
   if (audio) {
@@ -75,7 +77,7 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
     }
     onInput?.(action);
   };
-  const runtime = { get player() { return player; }, get state() { return state; }, get progression() { return progression; }, get score() { return score; }, get lives() { return lives; }, get powerUps() { return powerUps; }, get saves() { return saves; }, get audio() { return audio; }, get world() { return world; } };
+  const runtime = { get profile() { return playerProfile; }, get player() { return player; }, get state() { return state; }, get progression() { return progression; }, get score() { return score; }, get lives() { return lives; }, get powerUps() { return powerUps; }, get saves() { return saves; }, get audio() { return audio; }, get world() { return world; } };
   const world = new WorldSystem({ canvas, player, state, events: bus, progression, score, lives, powerUps, checkpoints, ui: null });
   const startLevel = level => { const result = world.startLevel(level); onStartLevel?.(level); return result; };
   const returnToMenu = () => { world.stop(); onMainMenu?.(); };
