@@ -129,7 +129,7 @@ export class Orca {
     ctx.fillStyle='#f0e9df';ctx.beginPath();ctx.ellipse(w*.28,-h*.11,w*.1,h*.11,0,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#151311';ctx.beginPath();ctx.arc(w*.31,-h*.14,Math.max(2,h*.05),0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#2e2824';ctx.beginPath();ctx.ellipse(w*.37,h*.05,w*.05,h*.04,0,0,Math.PI*2);ctx.fill();
-    for(let i=0;i<4;i++){const pawX=-w*.19+i*w*.12;ctx.fillStyle='#5d5148';ctx.beginPath();ctx.ellipse(pawX,h*.38+Math.sin(phase*8+i)*h*.025,w*.09,h*.08,0,0,Math.PI*2);ctx.fill();}
+    for(let i=0;i<4;i++){const pawX=-w*.19+i*w*.12;ctx.fillStyle='#5d5148';ctx.beginPath();ctx.ellipse(pawX,h*.38+Math.sin(phase*8+i)*h*.025+(pose.paws??0)*h*.03,w*.09,h*.08,0,0,Math.PI*2);ctx.fill();}
     ctx.restore();
   }
 
