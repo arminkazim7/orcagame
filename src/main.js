@@ -78,7 +78,7 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
     onInput?.(action);
   };
   const runtime = { get profile() { return playerProfile; }, get player() { return player; }, get state() { return state; }, get progression() { return progression; }, get score() { return score; }, get lives() { return lives; }, get powerUps() { return powerUps; }, get saves() { return saves; }, get audio() { return audio; }, get world() { return world; } };
-  const world = new WorldSystem({ canvas, player, state, events: bus, progression, score, lives, powerUps, checkpoints, ui: null });
+  const world = new WorldSystem({ canvas, player, state, events: bus, progression, score, lives, powerUps, checkpoints, profile: playerProfile, ui: null });
   const startLevel = level => { const result = world.startLevel(level); onStartLevel?.(level); return result; };
   const returnToMenu = () => { world.stop(); onMainMenu?.(); };
   const ui = uiRoot ? createUIManager({ root: uiRoot, runtime, onStartLevel: startLevel, onMainMenu: returnToMenu, onInput: handleUIInput }) : null;
