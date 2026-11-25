@@ -59,7 +59,7 @@ export class UIManager {
         nodes+=`<button type="button" class="map-node ${status}" style="left:${c.x/510*100}%;top:${c.y/490*100}%" data-action="level" data-level="${level}" ${status==='locked'?'disabled':''} aria-label="Level ${level}, ${status}"><b>${String(level).padStart(2,'0')}</b><small>${status==='gold'?'GOLD':status==='green'?'CLEAR':status==='available'?'DIVE':'LOCKED'}</small></button>`;
       });
       const bossLevel=world.levels[2],c=coords[bossLevel-1],bossId=world.bossId,bossOpen=(p.unlockedBosses??[]).includes(bossId),bossDone=(p.defeatedBosses??[]).includes(bossId);
-      nodes+=`<div class="map-boss-wrap" style="left:88%;top:${c.y/490*100}%" title="${esc(bossId)}"><span class="map-boss ${bossDone?'defeated':bossOpen?'open':'locked'}">${bossDone?'✦':'♛'}</span><small>BOSS</small></div>`;
+      nodes+=`<div class="boss-marker-wrap" style="left:88%;top:${c.y/490*100}%" title="${esc(bossId)}"><span class="map-boss ${bossDone?'defeated':bossOpen?'open':'locked'}">${bossDone?'✦':'♛'}</span><small>BOSS</small></div>`;
     });
     const allCoords=worlds.flatMap(w=>w.levels.map(level=>coords[level-1]));
     const route=allCoords.map((c,i)=>i?`L ${c.x} ${c.y}`:`M ${c.x} ${c.y}`).join(' ');
