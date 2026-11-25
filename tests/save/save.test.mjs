@@ -92,3 +92,28 @@ test('invalid player position in gameplay state rolls back manager changes', () 
 test('getSaveVersion returns current schema version', () => {
   assert.equal(makeHarness().save.getSaveVersion(), 1);
 });
+
+test('downloadSave keeps the object URL alive until after the browser handles the click', () => {
+  const h = makeHarness(); const originalDocument = globalThis.document;
+  const originalCreate = URL.createObjectURL, originalRevoke = URL.revokeObjectURL;
+  const originalSetTimeout = globalThis.setTimeout;
+  let clicked = false, revoked = false, scheduled = null;
+  const link = { style: {}, click(){ clicked = true; }, remove(){}, set href(value){ this._href=value; }, get href(){return this._href;} };
+  globalThis.document = { body: { appendChild(){} }, createElement(){ return link; } };
+  URL.createObjectURL = () => 'blob:test-save';
+  URL.revokeObjectURL = value => { assert.equal(value, 'blob:test-save'); revoked = true; };
+  globalThis.setTimeout = (fn, delay) => { scheduled = { fn, delay }; return 1; };
+  try {
+    const result = h.save.downloadSave();
+    assert.equal(result.downloaded, true);
+    assert.equal(clicked, true);
+    assert.equal(revoked, false, 'object URL must not be revoked in the click task');
+    assert.equal(scheduled.delay, 1000);
+    scheduled.fn();
+    assert.equal(revoked, true);
+  } finally {
+    globalThis.document = originalDocument;
+    URL.createObjectURL = originalCreate; URL.revokeObjectURL = originalRevoke;
+    globalThis.setTimeout = originalSetTimeout;
+  }
+});
