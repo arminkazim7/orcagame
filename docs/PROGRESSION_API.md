@@ -15,7 +15,7 @@ const powerUps = new PowerUpManager({ player: orca, events });
 const lives = new LifeManager({ player: orca, powerUps, checkpoints, events,
   levelStart: { x: 80, y: 300 } });
 const score = new ScoreManager({ lives, events });
-const progression = new ProgressionManager({ events, totalLevels: 25,
+const progression = new ProgressionManager({ events, totalLevels: 15,
   bossUnlocks: { 5: ['kelp-guardian'], 10: ['ice-leviathan'] } });
 ```
 
