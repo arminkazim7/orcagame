@@ -208,7 +208,7 @@ function defaultProgression(totalLevels) { return { totalLevels, currentLevel: 1
 function capturePlayer(player) {
   if (!player) return null;
   const state = {};
-  for (const key of ['x', 'y', 'vx', 'vy', 'grounded', 'facing', 'rotation', 'animationState']) {
+  for (const key of ['x', 'y', 'vx', 'vy', 'grounded', 'facing', 'rotation', 'animationState', 'characterType']) {
     const value = player[key];
     if (value === null || ['string', 'boolean'].includes(typeof value) || (typeof value === 'number' && Number.isFinite(value))) state[key] = value;
   }
@@ -221,4 +221,5 @@ function restorePlayer(player, state) {
   for (const key of ['facing', 'animationState']) if (state[key] !== undefined && typeof state[key] !== 'string') throw new TypeError(`Invalid player ${key}`);
   if (state.characterType !== undefined && !['orca','raccoon','octopus'].includes(state.characterType)) throw new TypeError('Invalid player characterType');
   Object.assign(player, state);
+  if (state.characterType && player.animation) player.animation.characterType = state.characterType;
 }
