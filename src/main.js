@@ -25,7 +25,7 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
     colour: { enumerable: true, get: () => paletteHex[player.color] ?? paletteHex.classic, set: value => { const match = Object.entries(paletteHex).find(([, hex]) => hex.toLowerCase() === String(value).toLowerCase()); player.customize({ color: match?.[0] ?? 'classic' }); } },
     characterType: { enumerable: true, get: () => player.characterType, set: value => player.customize({ characterType: value }) },
     cheatUnlocked: { enumerable: true, get: () => Boolean(state.progression.cheatUnlocked), set: value => { state.progression.cheatUnlocked = Boolean(value); } },
-    badges: { enumerable: true, get: () => badgeCollection, set: value => { badgeCollection.splice(0, badgeCollection.length, ...[...new Set((value ?? []).filter(n => Number.isInteger(n) && n >= 1 && n <= GAME_CONFIG.progression.totalLevels))]; } }
+    badges: { enumerable: true, get: () => badgeCollection, set: value => { badgeCollection.splice(0, badgeCollection.length, ...new Set((value ?? []).filter(n => Number.isInteger(n) && n >= 1 && n <= GAME_CONFIG.progression.totalLevels))); } }
   });
   const audio = audioEnabled ? new AudioManager({ musicEnabled: state.settings.musicEnabled, soundEnabled: state.settings.soundEnabled }) : null;
   if (audio) {
