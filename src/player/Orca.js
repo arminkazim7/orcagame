@@ -20,9 +20,10 @@ export class Orca {
     this.baseWidth = options.width ?? 66; this.baseHeight = options.height ?? 43;
     this.sizeScale = 1; this.jumpScale = 1;
     this.vx = 0; this.vy = 0; this.facing = 1; this.grounded = false;
-    this.name = options.name ?? 'Orca'; this.color = options.color ?? 'classic';
+    this.name = options.name ?? 'Orca'; this.color = options.color ?? 'classic'; this.characterType = options.characterType ?? 'orca';
+    if (!['orca','raccoon','octopus'].includes(this.characterType)) throw new RangeError(`Unknown character type: ${this.characterType}`);
     this.physics = options.physics ?? new OrcaPhysics(options.physicsOptions);
-    this.animation = options.animation ?? new OrcaAnimation();
+    this.animation = options.animation ?? new OrcaAnimation({ characterType: this.characterType });
     this.projectiles = options.projectiles ?? new Projectiles(options.projectileOptions);
     this.events = options.events ?? null; this.onEvent = options.onEvent ?? null;
     this.invulnerabilityMs = 0; this.protectionHits = 0; this.activePowerUp = null;
@@ -59,6 +60,8 @@ export class Orca {
     const blink = this.invulnerabilityMs > 0 && Math.floor(this.invulnerabilityMs / 75) % 2 === 0;
     if (blink) return;
     this.animation.renderEffects(ctx, x, y, this.width, pose);
+    if (this.characterType === 'raccoon') { this.#renderRaccoon(ctx, x, y, pose); this.projectiles.render(ctx, cameraX); this.#renderName(ctx,cameraX); return; }
+    if (this.characterType === 'octopus') { this.#renderOctopus(ctx, x, y, pose); this.projectiles.render(ctx, cameraX); this.#renderName(ctx,cameraX); return; }
     ctx.save();
     ctx.translate(x + this.width / 2, y + this.height / 2);
     ctx.scale(this.facing, 1);
@@ -109,6 +112,46 @@ export class Orca {
     ctx.fillText(this.name, this.centerX - cameraX, this.y - 8); ctx.restore();
   }
 
+  #renderName(ctx, cameraX) { ctx.save(); ctx.fillStyle = 'rgba(235,249,255,.9)'; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(this.name, this.centerX-cameraX, this.y-8); ctx.restore(); }
+
+  #renderRaccoon(ctx, x, y, pose) {
+    const w=this.width,h=this.height,t=pose.tail??0, phase=this.animation.time;
+    ctx.save(); ctx.translate(x+w/2,y+h/2); ctx.scale(this.facing,1); ctx.rotate(pose.rotation??0);
+    ctx.save(); ctx.translate(-w*.38,h*.12); ctx.rotate(t*.28+Math.sin(phase*4)*.12);
+    ctx.strokeStyle='#554039'; ctx.lineWidth=h*.42; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(-w*.25,-h*.34,-w*.48,-h*.12); ctx.stroke();
+    for(let i=0;i<4;i++){ctx.strokeStyle=i%2?'#e4d4b7':'#49372f';ctx.lineWidth=h*.12;ctx.beginPath();ctx.arc(-w*.24-i*w*.055,-h*.15+i*h*.025,h*.15,0,Math.PI*2);ctx.stroke();}
+    ctx.restore();
+    ctx.fillStyle='#81766b';ctx.beginPath();ctx.ellipse(0,h*.08,w*.37,h*.36,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#d6c8b5';ctx.beginPath();ctx.ellipse(w*.15,h*.2,w*.21,h*.18,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#5a4a40';for(const ex of [-w*.2,w*.2]){ctx.beginPath();ctx.arc(ex,-h*.29,h*.14,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle='#d7c9b7';for(const ex of [-w*.2,w*.2]){ctx.beginPath();ctx.arc(ex,-h*.29,h*.075,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle='#3e3530';ctx.beginPath();ctx.ellipse(w*.19,-h*.11,w*.24,h*.15,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f0e9df';ctx.beginPath();ctx.ellipse(w*.28,-h*.11,w*.1,h*.11,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#151311';ctx.beginPath();ctx.arc(w*.31,-h*.14,Math.max(2,h*.05),0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#2e2824';ctx.beginPath();ctx.ellipse(w*.37,h*.05,w*.05,h*.04,0,0,Math.PI*2);ctx.fill();
+    for(let i=0;i<4;i++){const pawX=-w*.19+i*w*.12;ctx.fillStyle='#5d5148';ctx.beginPath();ctx.ellipse(pawX,h*.38+Math.sin(phase*8+i)*h*.025,w*.09,h*.08,0,0,Math.PI*2);ctx.fill();}
+    ctx.restore();
+  }
+
+  #renderOctopus(ctx, x, y, pose) {
+    const w=this.width,h=this.height, phase=this.animation.time, wave=pose.tentacles??0;
+    ctx.save();ctx.translate(x+w/2,y+h*.38);ctx.scale(this.facing,1);ctx.rotate(pose.rotation??0);
+    const colors=['#a94dba','#8c3ca7','#c46bd0','#79328e'];
+    for(let i=0;i<8;i++){
+      const angle=-Math.PI*.85+i*Math.PI*1.7/7, len=h*(.55+(i%3)*.12), startX=Math.cos(angle)*w*.19,startY=h*.08+Math.sin(angle)*h*.08;
+      ctx.strokeStyle=colors[i%colors.length];ctx.lineWidth=h*.14;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(startX,startY);
+      const sway=Math.sin(phase*5+i*.8+wave)*len*.34;
+      ctx.bezierCurveTo(startX+Math.cos(angle)*len*.45+sway,startY+len*.4,startX+Math.sin(phase*3+i)*len*.3,startY+len*.7,startX+Math.cos(angle)*len*.65+sway,startY+len);
+      ctx.stroke();
+      ctx.fillStyle='rgba(255,232,255,.75)';for(let s=1;s<=3;s++){const sx=startX+Math.cos(angle)*len*s*.19+sway*s*.2,sy=startY+len*s*.24;ctx.beginPath();ctx.arc(sx,sy,h*.035,0,Math.PI*2);ctx.fill();}
+    }
+    ctx.fillStyle='#b45ac5';ctx.beginPath();ctx.ellipse(0,-h*.1,w*.34,h*.42,-.08,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#d889df';ctx.beginPath();ctx.ellipse(0,h*.12,w*.22,h*.22,0,0,Math.PI*2);ctx.fill();
+    for(const ex of [-w*.12,w*.12]){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ex,-h*.1,h*.12,0,Math.PI*2);ctx.fill();ctx.fillStyle='#292036';ctx.beginPath();ctx.arc(ex+w*.025,-h*.08,h*.055,0,Math.PI*2);ctx.fill();}
+    ctx.strokeStyle='#683274';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,h*.2,w*.075,.15,Math.PI-.15);ctx.stroke();
+    ctx.restore();
+  }
+
   shoot() {
     const projectile = this.projectiles.shoot(this);
     if (projectile) this.#emit('player.shoot', { x: projectile.x, y: projectile.y, direction: this.facing });
@@ -116,11 +159,12 @@ export class Orca {
   }
 
   /** Customize the visible name and one of classic, midnight, teal, rose, gold. */
-  customize({ name, color } = {}) {
+  customize({ name, color, characterType } = {}) {
     if (typeof name === 'string' && name.trim()) this.name = name.trim().slice(0, 24);
     if (color && PALETTES[color]) this.color = color;
-    this.#emit('player.customized', { name: this.name, color: this.color });
-    return { name: this.name, color: this.color };
+    if (characterType !== undefined) { if (!['orca','raccoon','octopus'].includes(characterType)) throw new RangeError(`Unknown character type: ${characterType}`); this.characterType = characterType; this.animation.characterType = characterType; }
+    this.#emit('player.customized', { name: this.name, color: this.color, characterType: this.characterType });
+    return { name: this.name, color: this.color, characterType: this.characterType };
   }
 
   /** Set absolute visual/physical size multiplier. */
