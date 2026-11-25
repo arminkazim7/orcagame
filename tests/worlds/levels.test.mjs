@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createLevel, LEVELS } from '../../src/worlds/levels.js';
 import { createGameRuntime } from '../../src/main.js';
-import { getBoss, damageBoss, clearEnemies } from '../../src/enemies/index.js';
+import { getBoss, damageBoss, clearEnemies, _getState as getEnemyState } from '../../src/enemies/index.js';
 
 test('campaign contains fifteen valid layouts across five worlds', () => {
   assert.equal(LEVELS.length, 15);
@@ -70,4 +70,22 @@ test('boss defeat bridges the configured campaign boss ID into progression', () 
     game.dispose();
     clearEnemies();
   }
+});
+
+test('player horizontal movement is blocked by live enemy colliders', () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    game.startLevel(1);
+    const enemy = getEnemyState().enemies[0];
+    assert.ok(enemy, 'level should spawn at least one enemy');
+    enemy.x = game.player.x + game.player.width + 4;
+    enemy.y = game.player.y;
+    enemy.speed = 0;
+    enemy.vy = 0;
+    enemy.patrolMin = enemy.x;
+    enemy.patrolMax = enemy.x + enemy.w;
+    game.input.setControl('right', true);
+    for (let i = 0; i < 10; i++) game.world.update(1 / 60, game.state, game.events, game.input);
+    assert.ok(game.player.x + game.player.width <= enemy.x + 0.01, 'player should stop at enemy left edge');
+  } finally { game.dispose(); clearEnemies(); }
 });
