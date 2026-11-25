@@ -20,10 +20,10 @@ Include `src/ui/ui.css` in a bundled build or let `UIManager` install its styles
 ## Public API
 
 - `showMainMenu()` — start, map, load, manual save, settings.
-- `showCharacterSetup({name, colour, difficulty})` — player profile, palette and mode selection with a drawn orca preview.
+- `showCharacterSetup({name, colour, difficulty, characterType})` — player profile, palette and mode selection with a preview of the selected playable character.
 - `showWorldMap()` — 15 level nodes on one connected route, five boss markers, permanent Hard Gold / Easy-only / available / locked status, and Orcalord indicator.
 - `updateHUD(data)` — player, world, level, difficulty, lives, score, next score-life progress, deaths, power-up and optional boss health.
-- `showVictory({level, animation, playerName})` — invokes `player.triggerVictoryAnimation()` on the actual Agent 2 player.
+- `showVictory({level, animation, playerName})` — invokes `player.triggerVictoryAnimation()` on the live runtime player and displays the animation in a dedicated canvas preview.
 - `showBossVictory({bossId, level, playerName, animation})` — invokes the player victory animation.
 - `showFinalEnding({playerName})` — invokes `grand victory leap`.
 - `showRecoveryScreen({difficulty})` — offers Easy/Hard selection using the permitted `all-lives-lost` difficulty boundary.
