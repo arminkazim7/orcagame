@@ -96,3 +96,13 @@ test('enemy contact damage deducts a life through the runtime event bridge',()=>
 test('each campaign level contains one unique badge collectible',()=>{for(let n=1;n<=15;n++){const level=createLevel(n);const badges=level.collectibles.filter(i=>i.type==='badge');assert.equal(badges.length,1);assert.equal(badges[0].badgeId,n);assert.equal(badges[0].id,'badge-'+n);assert.ok(level.platforms.some(p=>badges[0].x>=p.x&&badges[0].x+30<=p.x+p.w));}});
 
 test('badge pickup is stored in runtime profile even without a UI',()=>{const game=createGameRuntime({audioEnabled:false});try{game.startLevel(1);const badge=game.world.level.collectibles.find(i=>i.type==='badge');game.player.setInvulnerable(0);game.player.x=badge.x;game.player.y=badge.y;game.player.vx=0;game.player.vy=0;game.world.update(1/60,game.state,game.events,game.input);assert.ok(game.profile.badges.includes(1));assert.equal(badge.collected,true);}finally{game.dispose();clearEnemies();}});
+
+test('combat events are normalized on shared bus and progression reacts once',()=>{
+ const game=createGameRuntime({audioEnabled:false});const seen={damage:[],enemy:[],boss:[]};
+ const offs=[game.events.on('player.damaged',p=>seen.damage.push(p)),game.events.on('enemy.defeated',p=>seen.enemy.push(p)),game.events.on('boss.defeated',p=>seen.boss.push(p))];
+ try{
+  game.startLevel(1);const enemy=getEnemyState().enemies[0];enemy.speed=0;enemy.vy=0;enemy.touchCooldown=0;enemy.x=game.player.x;enemy.y=game.player.y;enemy.patrolMin=enemy.x;enemy.patrolMax=enemy.x+enemy.w;game.player.setInvulnerable(0);const lives=game.lives.getLives();game.world.update(1/60,game.state,game.events,game.input);
+  assert.equal(seen.damage.length,1);assert.equal(game.lives.getLives(),lives-1);assert.equal(seen.damage[0].source,'contact');assert.equal(seen.damage[0].applied,true);
+  game.startLevel(3);const boss=getBoss(1);assert.ok(boss);damageBoss(1,boss.maxHealth);game.world.update(1.5,game.state,game.events,game.input);assert.equal(seen.boss.length,1);assert.equal(seen.boss[0].bossId,'coral-warden');assert.ok(game.progression.defeatedBosses.includes('coral-warden'));
+ }finally{offs.forEach(off=>off());game.dispose();clearEnemies();}
+});
