@@ -41,7 +41,7 @@ export class WorldSystem {
         this.score.addScore(250);
       }),
       enemyEvents.on('enemy:stomped', event => { this.player.vy = -300; this.player.grounded = false; this.events.emit('enemy.stomped', event); }),
-      enemyEvents.on('player:damaged', event => this.events.emit('player.damaged', event)),
+
       enemyEvents.on('boss:damaged', event => this.events.emit('boss.damaged', { ...event, bossId: this.level?.boss?.id ?? event.bossId })),
       enemyEvents.on('boss:defeating', event => this.events.emit('boss.defeating', { ...event, bossId: this.level?.boss?.id ?? event.bossId })),
       enemyEvents.on('boss:defeated', event => {
