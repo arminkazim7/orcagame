@@ -43,7 +43,7 @@ export class WorldSystem {
         this.score.addScore(250);
       }),
       enemyEvents.on('enemy:stomped', event => { const { type: _type, ...payload } = event ?? {}; this.player.vy = -300; this.player.grounded = false; this.events.emit('enemy.stomped', payload); }),
-      enemyEvents.on('player:damaged', event => { const { type: _type, applied, ...payload } = event ?? {}; if (applied) this.events.emit('player.damaged', payload); }),
+      enemyEvents.on('player:damaged', event => { const { type: _type, ...payload } = event ?? {}; if (payload.applied) this.events.emit('player.damaged', payload); }),
 
       enemyEvents.on('boss:damaged', event => { const { type: _type, ...payload } = event ?? {}; this.events.emit('boss.damaged', { ...payload, bossId: this.level?.boss?.id ?? payload.bossId }); }),
       enemyEvents.on('boss:defeating', event => { const { type: _type, ...payload } = event ?? {}; this.events.emit('boss.defeating', { ...payload, bossId: this.level?.boss?.id ?? payload.bossId }); }),
