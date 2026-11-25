@@ -24,6 +24,7 @@ export class UIManager {
     const link = document.createElement('link'); link.id = 'orca-ui-styles'; link.rel = 'stylesheet'; link.href = new URL('./ui.css', import.meta.url).href; document.head.append(link);
   }
   #shell(title, body, subtitle='') {
+    this.#stopPreview();
     this.screen = title.toLowerCase().replace(/[^a-z]+/g,'-');
     this.root.innerHTML = `<section class="orca-ui"><header class="orca-top"><div class="orca-mark">◈ ORCA ADVENTURE</div><div class="orca-sub">${esc(subtitle)}</div></header><main class="orca-panel"><h1 tabindex="-1" aria-live="polite">${esc(title)}</h1>${body}</main><footer class="orca-foot">THE DEEP IS CALLING <span>◆ ◆ ◆</span></footer></section>`;
     this.root.querySelector('.orca-panel h1')?.focus?.({ preventScroll: true });
@@ -42,7 +43,8 @@ export class UIManager {
     this.#drawPreview(result.querySelector('[data-preview]'), colour, characterType);
     return result;
   }
-  #drawPreview(canvas, colour='classic', characterType=this.characterType??'orca') { if(!canvas)return; const ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#0a5970'; ctx.fillRect(0,0,canvas.width,canvas.height); for(let i=0;i<8;i++){ctx.fillStyle='rgba(180,245,255,.22)';ctx.fillRect((i*37+13)%230,(i*23+8)%140,3,3);} const preview=new Orca({x:87,y:55,name:'Preview',color:colour,characterType}); preview.animation.time=1.4; preview.animationState='swim'; preview.render(ctx,0); }
+  #stopPreview(){if(this._previewFrame!==undefined&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(this._previewFrame);this._previewFrame=undefined;this._previewPlayer=null;}
+  #drawPreview(canvas, colour='classic', characterType=this.characterType??'orca') { if(!canvas)return; const ctx=canvas.getContext('2d'); const preview=new Orca({x:87,y:55,name:'Preview',color:colour,characterType}); preview.animationState='swim'; this._previewPlayer=preview; const draw=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#0a5970';ctx.fillRect(0,0,canvas.width,canvas.height);for(let i=0;i<8;i++){ctx.fillStyle='rgba(180,245,255,.22)';ctx.fillRect((i*37+13)%230,(i*23+8)%140,3,3);}preview.render(ctx,0);};draw();if(typeof requestAnimationFrame==='function'){let previous=0;const animate=now=>{if(!this._previewPlayer||this._previewPlayer!==preview)return;const dt=previous?Math.min((now-previous)/1000,.05):0;previous=now;preview.animation.update(dt);draw();this._previewFrame=requestAnimationFrame(animate);};this._previewFrame=requestAnimationFrame(animate);} }
   showWorldMap() {
     const p = this.#state(); const completed = p.completedLevels ?? {}; const unlocked = new Set(p.unlockedLevels ?? [1]); const gold = new Set(p.goldLevels ?? []);
     let route = '', nodes = '';
@@ -132,6 +134,7 @@ export class UIManager {
     for(const active of this._activePointers.values())active.button.classList.remove('pressed');
     for(const key of Object.keys(this.input)){if(this.input[key])this.onInput?.({type:'control',control:key,pressed:false});this.input[key]=false;}
     this._activePointers.clear();
+    this.#stopPreview();
     this.root.removeEventListener('click',this._click);this.root.removeEventListener('change',this._change);this.root.removeEventListener('pointerdown',this._pointerDown);this.root.removeEventListener('pointerup',this._pointerUp);this.root.removeEventListener('pointercancel',this._pointerUp);this.root.removeEventListener('lostpointercapture',this._pointerUp);this.root.replaceChildren();
   }
 }
