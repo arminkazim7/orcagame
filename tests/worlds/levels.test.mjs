@@ -89,3 +89,6 @@ test('player horizontal movement is blocked by live enemy colliders', () => {
     assert.ok(game.player.x + game.player.width <= enemy.x + 0.01, 'player should stop at enemy left edge');
   } finally { game.dispose(); clearEnemies(); }
 });
+
+
+test('enemy contact damage deducts a life through the runtime event bridge',()=>{const game=createGameRuntime({audioEnabled:false});try{game.startLevel(1);const enemy=getEnemyState().enemies[0];enemy.speed=0;enemy.vy=0;enemy.x=game.player.x;enemy.y=game.player.y;enemy.patrolMin=enemy.x;enemy.patrolMax=enemy.x+enemy.w;const before=game.lives.getLives();game.world.update(1/60,game.state,game.events,game.input);assert.equal(game.lives.getLives(),before-1);assert.ok(game.player.invulnerabilityMs>0);}finally{game.dispose();clearEnemies();}});
