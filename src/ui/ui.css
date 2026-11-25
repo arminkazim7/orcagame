@@ -10,3 +10,5 @@
 .orca-ui:has(.orca-hud) .orca-top,.orca-ui:has(.orca-hud) .orca-foot{display:none}
 .orca-ui:has(.orca-hud) .orca-hud{pointer-events:none}
 .orca-ui:has(.orca-hud) .orca-mobile-controls{pointer-events:none}
+
+.orca-victory-preview{display:block;width:min(100%,480px);height:auto;aspect-ratio:2/1;margin:18px auto;border:2px solid #51c5d2;background:#07334d;image-rendering:pixelated;box-shadow:4px 4px 0 #021b31}
