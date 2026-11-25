@@ -39,3 +39,35 @@ The tests live in the repository-level `tests/` directory. The build produces `d
 - `project/` — project-wide rules and acceptance checklist
 
 The `src/AGENT_*_HANDOFF.md` files are historical specialist handoffs, not authoritative current status. Use `architecture/INTEGRATION_STATUS.md`, the source code, and the latest CI run for current integration state. Keep documentation changes aligned with implementation and tests.
+
+## Enemy and collectible field guide
+
+### Regular enemies
+
+| Enemy | Visual design | Behavior | Contact damage |
+|---|---|---|---|
+| Walker | Rounded purple armored body, eyes and orange feet | Ground patrol; turns at platform boundaries | **Yes**; a successful downward stomp defeats it |
+| Flyer | Pink diamond body with wing accents and eyes | Flying patrol with hover motion | **Yes**; can be stomped from above |
+| Shooter | Green armored body with raised cannon and muzzle | Ground patrol; fires green projectiles when player is within range | **Yes**, plus projectile damage |
+
+### Bosses
+
+| Boss | World | Visual shape / attack |
+|---|---:|---|
+| Coral Warden | 1 — Coral Cove | Brute form; fireball attacks |
+| Kelp Guardian | 2 — Kelp Forest | Crystal form; shard attacks |
+| Ice Leviathan | 3 — Arctic Depths | Serpent form; charging attacks |
+| Ruin Colossus | 4 — Sunken Ruins | Warden form; radial attacks and minions |
+| Abyss Emperor | 5 — Abyssal Reach | Sovereign form; teleporting barrages |
+
+### Collectibles and power-ups
+
+| Item | Distinct design | Effect |
+|---|---|---|
+| Sea Berry | Pink berry silhouette with green leaf and shine | Enlarges player; absorbs one hit |
+| Golden Krill | Gold angular krill badge | Enlarges player and boosts jump; absorbs one hit |
+| Bubble Shell | Cyan shell/bubble with ribs and highlight | Standard size; absorbs one hit |
+| Bonus Life | Yellow diamond with plus | Adds one life |
+| Checkpoint | White ring with teal center marker | Sets recovery checkpoint |
+
+Collectibles use unique silhouettes rather than a shared generic circle. Regular enemies have separate silhouettes and detailing. All regular enemies are damaging on contact, except a successful downward stomp defeats them instead of hurting the player.
