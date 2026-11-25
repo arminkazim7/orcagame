@@ -10,7 +10,7 @@ const intersects = (a, b) =>
 
 /** Owns the active level lifecycle and composes player, enemies, bosses and progression. */
 export class WorldSystem {
-  constructor({ canvas, player, state, events, progression, score, lives, powerUps, checkpoints, ui }) {
+  constructor({ canvas, player, state, events, progression, score, lives, powerUps, checkpoints, profile = null, ui }) {
     this.canvas = canvas;
     this.player = player;
     this.state = state;
@@ -20,6 +20,7 @@ export class WorldSystem {
     this.lives = lives;
     this.powerUps = powerUps;
     this.checkpoints = checkpoints;
+    this.profile = profile;
     this.ui = ui;
     this.level = null;
     this.cameraX = 0;
@@ -148,7 +149,7 @@ export class WorldSystem {
       if (!intersects(this.playerCombatant.getBounds(), bounds)) continue;
       item.collected = true;
       if (item.type === 'badge') {
-        const badges = this.ui?.runtime?.profile?.badges ?? [];
+        const badges = this.profile?.badges ?? [];
         if (!badges.includes(item.badgeId)) { badges.push(item.badgeId); this.events.emit('badge.collected', { level: level.number, badgeId: item.badgeId }); }
       } else if (item.type === 'powerup') this.powerUps.collectPowerUp(item.powerUp);
       else if (item.type === 'life') this.lives.collectBonusLife(item);
