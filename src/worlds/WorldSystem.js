@@ -41,6 +41,7 @@ export class WorldSystem {
         this.score.addScore(250);
       }),
       enemyEvents.on('enemy:stomped', event => { this.player.vy = -300; this.player.grounded = false; this.events.emit('enemy.stomped', event); }),
+      enemyEvents.on('player:damaged', event => this.events.emit('player.damaged', event)),
       enemyEvents.on('boss:damaged', event => this.events.emit('boss.damaged', { ...event, bossId: this.level?.boss?.id ?? event.bossId })),
       enemyEvents.on('boss:defeating', event => this.events.emit('boss.defeating', { ...event, bossId: this.level?.boss?.id ?? event.bossId })),
       enemyEvents.on('boss:defeated', event => {
@@ -276,12 +277,12 @@ export class WorldSystem {
     ctx.fillRect(level.exit.x + 10, level.exit.y + 10, level.exit.w - 20, level.exit.h - 10);
     for (const item of level.collectibles) {
       if (item.collected) continue;
-      ctx.beginPath();
-      ctx.fillStyle = item.type === 'life' ? '#ffdf71' : item.type === 'checkpoint' ? '#fff' : '#8ff7ff';
-      ctx.arc(item.x + 15, item.y + 15, 12, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,.7)';
-      ctx.stroke();
+      const cx=item.x+15, cy=item.y+15; ctx.save(); ctx.translate(cx,cy);
+      if(item.type==='powerup'&&item.powerUp==='sea-berry'){ctx.fillStyle='#f04e86';ctx.strokeStyle='#ffd4e3';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,2,10,12,-.25,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#65d77c';ctx.beginPath();ctx.ellipse(2,-11,5,3,-.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-3,-1,2,0,Math.PI*2);ctx.fill();}
+      else if(item.type==='powerup'&&item.powerUp==='golden-krill'){ctx.fillStyle='#ffc83d';ctx.strokeStyle='#fff0a8';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(-5,-7);ctx.lineTo(0,-4);ctx.lineTo(5,-7);ctx.lineTo(10,0);ctx.lineTo(5,7);ctx.lineTo(0,4);ctx.lineTo(-5,7);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#fff';ctx.fillRect(-3,-2,2,2);ctx.fillRect(3,-2,2,2);}
+      else if(item.type==='powerup'&&item.powerUp==='bubble-shell'){ctx.fillStyle='#55dcff';ctx.strokeStyle='#e2fbff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,11,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.strokeStyle='#087baf';ctx.lineWidth=2;for(let k=-2;k<=2;k++){ctx.beginPath();ctx.arc(k*4,0,7,.15*Math.PI,.85*Math.PI);ctx.stroke();}ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-4,-5,3,0,Math.PI*2);ctx.fill();}
+      else if(item.type==='life'){ctx.fillStyle='#ffe36b';ctx.strokeStyle='#fff5bc';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-12);ctx.lineTo(11,0);ctx.lineTo(0,12);ctx.lineTo(-11,0);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('+',0,0);}
+      else{ctx.fillStyle='#fff';ctx.strokeStyle='#75f4d2';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,10,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#087baf';ctx.fillRect(-3,-7,6,14);}ctx.restore();
     }
     ctx.restore();
     this.player.render(ctx, this.cameraX);
