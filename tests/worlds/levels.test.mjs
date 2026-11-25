@@ -103,6 +103,6 @@ test('combat events are normalized on shared bus and progression reacts once',()
  try{
   game.startLevel(1);const enemy=getEnemyState().enemies[0];enemy.speed=0;enemy.vy=0;enemy.touchCooldown=0;enemy.x=game.player.x;enemy.y=game.player.y;enemy.patrolMin=enemy.x;enemy.patrolMax=enemy.x+enemy.w;game.player.setInvulnerable(0);const lives=game.lives.getLives();game.world.update(1/60,game.state,game.events,game.input);
   assert.equal(seen.damage.length,1);assert.equal(game.lives.getLives(),lives-1);assert.equal(seen.damage[0].source,'contact');assert.equal(seen.damage[0].applied,true);
-  game.startLevel(3);const boss=getBoss(1);assert.ok(boss);damageBoss(1,boss.maxHealth);game.world.update(1.5,game.state,game.events,game.input);assert.equal(seen.boss.length,1);assert.equal(seen.boss[0].bossId,'coral-warden');assert.ok(game.progression.defeatedBosses.includes('coral-warden'));
+  game.progression.unlockAllLevels();game.startLevel(3);const boss=getBoss(1);assert.ok(boss);damageBoss(1,boss.maxHealth);game.world.update(1.5,game.state,game.events,game.input);assert.equal(seen.boss.length,1);assert.equal(seen.boss[0].bossId,'coral-warden');assert.ok(game.progression.defeatedBosses.includes('coral-warden'));
  }finally{offs.forEach(off=>off());game.dispose();clearEnemies();}
 });
