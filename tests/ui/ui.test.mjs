@@ -47,3 +47,13 @@ test('mobile controls support simultaneous pointers and release each action inde
   assert.deepEqual(actions.map(a=>[a.control,a.pressed]),[['left',true],['jump',true],['left',false],['jump',false]]);
   runtime.dispose();
 });
+
+test('character setup includes orca raccoon and octopus with selected-character field',()=>{
+  const {root,ui}=fixture();
+  ui.showCharacterSetup();
+  assert.ok(root.innerHTML.includes('name="characterType"'));
+  assert.ok(root.innerHTML.includes('value="orca"'));
+  assert.ok(root.innerHTML.includes('value="raccoon"'));
+  assert.ok(root.innerHTML.includes('value="octopus"'));
+  assert.ok(root.innerHTML.includes('RACCOON — AGILE PAWS'));
+});
