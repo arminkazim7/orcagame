@@ -9,7 +9,7 @@ const step = (orca, input, platforms, n = 1, dt = 1 / 60) => {
 test('orca has an anatomically specified, leg-free body size and customizable name/color', () => {
   const o = new Orca();
   assert.equal(o.width, 66); assert.equal(o.height, 43);
-  assert.deepEqual(o.customize({ name: 'Nori', color: 'teal' }), { name: 'Nori', color: 'teal' });
+  assert.deepEqual(o.customize({ name: 'Nori', color: 'teal' }), { name: 'Nori', color: 'teal', characterType: 'orca' });
   assert.equal(o.name, 'Nori'); assert.equal(o.color, 'teal');
 });
 
