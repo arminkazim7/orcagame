@@ -133,7 +133,7 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
     raf = requestAnimationFrame(frame);
   }
   return {
-    config: GAME_CONFIG, state, events: bus, player, checkpoints, powerUps, lives, score, progression, saves, audio, ui, input, world,
+    config: GAME_CONFIG, state, events: bus, player, profile: playerProfile, checkpoints, powerUps, lives, score, progression, saves, audio, ui, input, world,
     startLevel,
     registerSystem(system) { if (!system || typeof system !== 'object') throw new TypeError('System must be an object'); systems.push(system); return () => { const i = systems.indexOf(system); if (i >= 0) systems.splice(i,1); }; },
     start() { if (running || typeof requestAnimationFrame !== 'function') return false; running = true; previous = null; raf = requestAnimationFrame(frame); return true; },
