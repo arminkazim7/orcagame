@@ -1,3 +1,7 @@
+> **Historical handoff — not current project status.** This file records an earlier specialist delivery snapshot and contains historical test counts and integration assumptions. The integrated application has since evolved. For current status, use `../architecture/INTEGRATION_STATUS.md`, `README.md`, current source code, and the latest GitHub Actions run for `main`. Do not treat the limitations or pass counts below as current facts.
+
+---
+
 # Agent 5 Handoff — Power-ups, Score, Lives, and Progression
 
 **Owned:** `src/progression/`
