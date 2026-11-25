@@ -147,7 +147,10 @@ export class WorldSystem {
       const bounds = { x: item.x, y: item.y, w: 30, h: 30 };
       if (!intersects(this.playerCombatant.getBounds(), bounds)) continue;
       item.collected = true;
-      if (item.type === 'powerup') this.powerUps.collectPowerUp(item.powerUp);
+      if (item.type === 'badge') {
+        const badges = this.ui?.runtime?.profile?.badges ?? [];
+        if (!badges.includes(item.badgeId)) { badges.push(item.badgeId); this.events.emit('badge.collected', { level: level.number, badgeId: item.badgeId }); }
+      } else if (item.type === 'powerup') this.powerUps.collectPowerUp(item.powerUp);
       else if (item.type === 'life') this.lives.collectBonusLife(item);
       else if (item.type === 'checkpoint') this.checkpoints.activateCheckpoint({ id: item.id, x: item.x, y: item.y - this.player.height, level: level.number });
     }
@@ -278,7 +281,8 @@ export class WorldSystem {
     for (const item of level.collectibles) {
       if (item.collected) continue;
       const cx=item.x+15, cy=item.y+15; ctx.save(); ctx.translate(cx,cy);
-      if(item.type==='powerup'&&item.powerUp==='sea-berry'){ctx.fillStyle='#f04e86';ctx.strokeStyle='#ffd4e3';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,2,10,12,-.25,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#65d77c';ctx.beginPath();ctx.ellipse(2,-11,5,3,-.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-3,-1,2,0,Math.PI*2);ctx.fill();}
+      if(item.type==='badge'){const palette=['#ff8a5b','#64d9c2','#a18bff','#ffdb68','#6cc8ff'];ctx.fillStyle=palette[(item.badgeId-1)%palette.length];ctx.strokeStyle='#fff5c6';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-13);ctx.lineTo(11,-7);ctx.lineTo(9,8);ctx.lineTo(0,13);ctx.lineTo(-9,8);ctx.lineTo(-11,-7);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#07344b';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(item.badgeId),0,0);}
+      else if(item.type==='powerup'&&item.powerUp==='sea-berry'){ctx.fillStyle='#f04e86';ctx.strokeStyle='#ffd4e3';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,2,10,12,-.25,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#65d77c';ctx.beginPath();ctx.ellipse(2,-11,5,3,-.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-3,-1,2,0,Math.PI*2);ctx.fill();}
       else if(item.type==='powerup'&&item.powerUp==='golden-krill'){ctx.fillStyle='#ffc83d';ctx.strokeStyle='#fff0a8';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(-5,-7);ctx.lineTo(0,-4);ctx.lineTo(5,-7);ctx.lineTo(10,0);ctx.lineTo(5,7);ctx.lineTo(0,4);ctx.lineTo(-5,7);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#fff';ctx.fillRect(-3,-2,2,2);ctx.fillRect(3,-2,2,2);}
       else if(item.type==='powerup'&&item.powerUp==='bubble-shell'){ctx.fillStyle='#55dcff';ctx.strokeStyle='#e2fbff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,11,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.strokeStyle='#087baf';ctx.lineWidth=2;for(let k=-2;k<=2;k++){ctx.beginPath();ctx.arc(k*4,0,7,.15*Math.PI,.85*Math.PI);ctx.stroke();}ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-4,-5,3,0,Math.PI*2);ctx.fill();}
       else if(item.type==='life'){ctx.fillStyle='#ffe36b';ctx.strokeStyle='#fff5bc';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-12);ctx.lineTo(11,0);ctx.lineTo(0,12);ctx.lineTo(-11,0);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('+',0,0);}
