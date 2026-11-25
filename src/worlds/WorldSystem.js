@@ -1,7 +1,7 @@
 import { createLevel } from './levels.js';
 import {
   spawnEnemies, updateEnemies, renderEnemies, spawnBoss, updateBoss,
-  getBoss, clearEnemies, serializeEncounter, restoreEncounter, events as enemyEvents
+  getBoss, clearEnemies, serializeEncounter, restoreEncounter, events as enemyEvents, _getState as _getEnemyState
 } from '../enemies/index.js';
 
 const intersects = (a, b) =>
@@ -124,6 +124,22 @@ export class WorldSystem {
     };
     updateEnemies(dt, world);
     if (level.boss) updateBoss(dt, world);
+
+    // Enemies are solid obstacles: stop horizontal player movement at their sides.
+    // Stomped/dead enemies and upward bounce motion are intentionally not blocked.
+    for (const enemy of _getEnemyState().enemies) {
+      if (enemy.dead || !intersects(this.playerCombatant.getBounds(), { x: enemy.x, y: enemy.y, w: enemy.w, h: enemy.h })) continue;
+      if (this.player.vy < 0) continue;
+      const playerRight = this.player.x + this.player.width;
+      const enemyRight = enemy.x + enemy.w;
+      const centerPlayer = this.player.x + this.player.width / 2;
+      const centerEnemy = enemy.x + enemy.w / 2;
+      if (this.player.vx >= 0 && centerPlayer <= centerEnemy) this.player.x = enemy.x - this.player.width;
+      else if (this.player.vx <= 0 && centerPlayer >= centerEnemy) this.player.x = enemyRight;
+      else if (playerRight > enemy.x && this.player.x < enemyRight) this.player.x = centerPlayer < centerEnemy ? enemy.x - this.player.width : enemyRight;
+      this.player.vx = 0;
+    }
+
 
     for (const item of level.collectibles) {
       if (item.collected) continue;
