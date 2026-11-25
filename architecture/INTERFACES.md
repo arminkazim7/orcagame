@@ -19,7 +19,7 @@
 ## Event contract v1
 `player.jump`, `player.dropThrough`, `player.shoot`, `player.damaged`, `player.protectionConsumed`, `player.recovered`, `enemy.defeated`, `powerup.collected`, `powerup.applied`, `powerup.consumed`, `bonusLife.collected`, `checkpoint.activated`, `level.completed`, `boss.started`, `boss.damaged`, `boss.defeated`, `difficulty.changed`, `player.victoryAnimationStarted`, `player.victoryAnimationComplete`.
 
-Event payloads are plain JSON-compatible objects. Producers emit once per actual occurrence. `level.completed` includes `{ level, difficulty, score, newlyUnlocked, gold, ... }`; `boss.started` includes `{ bossId }`. Audio listens to the above exact IDs. Do not repurpose `powerup.collected` for Bonus Life; use `bonusLife.collected` and map it to the `bonusLife` audio effect.
+Event payloads are plain JSON-compatible objects (never wrapped in a redundant `{ type, ...payload }` envelope). Agent-local colon-style combat events must be normalized to the dotted shared IDs at the WorldSystem boundary. `player.damaged` is emitted only when Orca damage is actually applied (not while invulnerable or when protection absorbs the hit), and progression consumes it exactly once. Producers emit once per actual occurrence. `level.completed` includes `{ level, difficulty, score, newlyUnlocked, gold, ... }`; `boss.started` includes `{ bossId }`. Audio listens to the above exact IDs. Do not repurpose `powerup.collected` for Bonus Life; use `bonusLife.collected` and map it to the `bonusLife` audio effect.
 
 ## Initialization order
 1. `EventBus` and shared state.
