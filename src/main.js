@@ -12,7 +12,7 @@ import { WorldSystem } from './worlds/WorldSystem.js';
 export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, audioEnabled = true, onStartLevel = null, onMainMenu = null, onInput = null } = {}) {
   const state = createGameState();
   const bus = new EventBus();
-  const player = new Orca({ x: state.player.x, y: state.player.y, name: profile.name ?? state.player.name, color: profile.color ?? state.player.color, events: bus });
+  const player = new Orca({ x: state.player.x, y: state.player.y, name: profile.name ?? state.player.name, color: profile.color ?? state.player.color, characterType: profile.characterType ?? state.player.characterType ?? 'orca', events: bus });
   const checkpoints = new CheckpointManager({ events: bus });
   const powerUps = new PowerUpManager({ player, events: bus });
   const lives = new LifeManager({ player, powerUps, checkpoints, events: bus, levelStart: { x: 80, y: 300 } });
@@ -22,6 +22,7 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
   const playerProfile = Object.defineProperties({}, {
     name: { enumerable: true, get: () => player.name, set: value => player.customize({ name: value }) },
     colour: { enumerable: true, get: () => paletteHex[player.color] ?? paletteHex.classic, set: value => { const match = Object.entries(paletteHex).find(([, hex]) => hex.toLowerCase() === String(value).toLowerCase()); player.customize({ color: match?.[0] ?? 'classic' }); } },
+    characterType: { enumerable: true, get: () => player.characterType, set: value => player.customize({ characterType: value }) },
     cheatUnlocked: { enumerable: true, get: () => Boolean(state.progression.cheatUnlocked), set: value => { state.progression.cheatUnlocked = Boolean(value); } }
   });
   const audio = audioEnabled ? new AudioManager({ musicEnabled: state.settings.musicEnabled, soundEnabled: state.settings.soundEnabled }) : null;
