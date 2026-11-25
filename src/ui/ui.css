@@ -40,8 +40,8 @@
 .orca-map .map-node.green{background:radial-gradient(circle at 35% 28%,#e5fff4,#43bf8d 72%);border-color:#b9ffdc;color:#063c2c}
 .orca-map .map-node.available{background:radial-gradient(circle at 35% 28%,#fff,#83d5e4 75%);border-color:#e1fcff;color:#07334a;animation:map-pulse 2.4s ease-in-out infinite}
 .orca-map .map-node.locked{background:linear-gradient(145deg,#536c7a,#344b5a);border-color:#8aa0aa;color:#d2e1e6;opacity:.78;box-shadow:0 0 0 3px #142d3b}
-.map-boss-wrap{position:absolute;z-index:2;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:1px;min-width:32px}
-.map-boss-wrap small{font-size:7px;letter-spacing:.1em;color:#ffe5a1;text-shadow:1px 1px #001c30}
+.boss-marker-wrap{position:absolute;z-index:2;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:1px;min-width:32px}
+.boss-marker-wrap small{font-size:7px;letter-spacing:.1em;color:#ffe5a1;text-shadow:1px 1px #001c30}
 .orca-map .map-boss{position:static;transform:none;display:grid;place-items:center;width:36px;height:36px;border:2px solid #ffe5a1;border-radius:9px;background:linear-gradient(145deg,#9a692a,#513b29);color:#fff1ae;font-size:22px;box-shadow:0 0 0 3px #372b1d99,0 0 15px #ffcf6b88}
 .orca-map .map-boss.locked{filter:grayscale(1);opacity:.65}
 .orca-map .map-boss.open{animation:map-boss-glow 1.8s ease-in-out infinite}
