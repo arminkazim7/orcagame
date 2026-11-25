@@ -25,7 +25,8 @@ startButton.addEventListener('click', async () => {
 events.on('player.jump', () => audio.playSound('jump'));
 events.on('player.shoot', () => audio.playSound('shoot'));
 events.on('enemy.defeated', () => audio.playSound('enemyDefeat'));
-events.on('powerup.collected', ({ type }) => audio.playSound(type === 'bonus-life' ? 'bonusLife' : 'powerUp'));
+events.on('powerup.collected', () => audio.playSound('powerUp'));
+events.on('bonusLife.collected', () => audio.playSound('bonusLife'));
 events.on('player.damaged', () => audio.playSound('playerDamage'));
 events.on('checkpoint.activated', () => audio.playSound('checkpoint'));
 events.on('boss.started', ({ bossId }) => audio.playBossMusic(bossId));
@@ -78,4 +79,4 @@ Browsers may block audio until a user gesture. The module does not try to bypass
 
 ## Integration note
 
-The shared interface document in the supplied development pack labels its event bus and state shape as proposals, not frozen contracts. The snippet above is therefore an adapter example; the lead architect should align event names and boss IDs with the finalized contract before merge.
+The shared event names are defined in `architecture/INTERFACES.md`. Bonus Life is a separate `bonusLife.collected` event, not a `powerup.collected` subtype. The integrated runtime is the authoritative example of event wiring.
