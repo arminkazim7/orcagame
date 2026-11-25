@@ -117,3 +117,5 @@ test('downloadSave keeps the object URL alive until after the browser handles th
     globalThis.setTimeout = originalSetTimeout;
   }
 });
+
+test('badge collection persists through portable save/load and validates',async()=>{const src=makeHarness();src.profile.badges=[2,5,15];const save=src.save.createSave();assert.deepEqual(save.player.badges,[2,5,15]);const dest=makeHarness();const result=await dest.save.loadSave(JSON.stringify(save));assert.equal(result.loaded,true);assert.deepEqual(dest.profile.badges,[2,5,15]);const invalid=dest.save.createSave();invalid.player.badges=[1,1];assert.equal(dest.save.validateSave(invalid).valid,false);});
