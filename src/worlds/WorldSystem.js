@@ -34,20 +34,23 @@ export class WorldSystem {
       get vx() { return player.vx; },
       get vy() { return player.vy; },
       isInvulnerable: () => player.isInvulnerable,
-      onDamaged: () => player.takeDamage()
+      onDamaged: (amount, source) => player.takeDamage({ emitEvent: false, source })
     };
     this.unsubscribers = [
       enemyEvents.on('enemy:defeated', event => {
-        this.events.emit('enemy.defeated', event);
+        const { type: _type, ...payload } = event ?? {};
+        this.events.emit('enemy.defeated', payload);
         this.score.addScore(250);
       }),
-      enemyEvents.on('enemy:stomped', event => { this.player.vy = -300; this.player.grounded = false; this.events.emit('enemy.stomped', event); }),
+      enemyEvents.on('enemy:stomped', event => { const { type: _type, ...payload } = event ?? {}; this.player.vy = -300; this.player.grounded = false; this.events.emit('enemy.stomped', payload); }),
+      enemyEvents.on('player:damaged', event => { const { type: _type, applied, ...payload } = event ?? {}; if (applied) this.events.emit('player.damaged', payload); }),
 
-      enemyEvents.on('boss:damaged', event => this.events.emit('boss.damaged', { ...event, bossId: this.level?.boss?.id ?? event.bossId })),
-      enemyEvents.on('boss:defeating', event => this.events.emit('boss.defeating', { ...event, bossId: this.level?.boss?.id ?? event.bossId })),
+      enemyEvents.on('boss:damaged', event => { const { type: _type, ...payload } = event ?? {}; this.events.emit('boss.damaged', { ...payload, bossId: this.level?.boss?.id ?? payload.bossId }); }),
+      enemyEvents.on('boss:defeating', event => { const { type: _type, ...payload } = event ?? {}; this.events.emit('boss.defeating', { ...payload, bossId: this.level?.boss?.id ?? payload.bossId }); }),
       enemyEvents.on('boss:defeated', event => {
-        const bossId = this.level?.boss?.id ?? event.bossId;
-        this.events.emit('boss.defeated', { ...event, bossId });
+        const { type: _type, ...payload } = event ?? {};
+        const bossId = this.level?.boss?.id ?? payload.bossId;
+        this.events.emit('boss.defeated', { ...payload, bossId });
         this.#completeLevel(bossId);
       })
     ];
