@@ -222,7 +222,7 @@ export class Orca {
     }
     this.invulnerabilityMs = options.invulnerabilityMs ?? 1100;
     this.lastDamageAt = 0;
-    this.#emit('player.damaged', { x: this.x, y: this.y });
+    if (options.emitEvent !== false) this.#emit('player.damaged', { x: this.x, y: this.y, source: options.source ?? 'damage' });
     if (options.knockback !== false) { this.vy = -230; this.vx = -this.facing * 110; this.grounded = false; }
     return true;
   }
