@@ -13,6 +13,7 @@ export const GAME_CONFIG = Object.freeze({
   ]),
   bosses: Object.freeze(['coral-warden','kelp-guardian','ice-leviathan','ruin-colossus','abyss-emperor']),
   playerColours: Object.freeze(['classic','midnight','teal','rose','gold']),
+  playableCharacters: Object.freeze([{ id:'orca', name:'Orca', description:'Balanced ocean swimmer', unlocked:true }, { id:'raccoon', name:'Raccoon', description:'Quick paws and agile movement', unlocked:true }, { id:'octopus', name:'Octopus', description:'Eight tentacles with fluid swimming animation', unlocked:true }]),
   powerUps: Object.freeze(['sea-berry','golden-krill','bubble-shell'])
 });
 export const BOSS_UNLOCKS = Object.freeze({ 3:['coral-warden'], 6:['kelp-guardian'], 9:['ice-leviathan'], 12:['ruin-colossus'], 15:['abyss-emperor'] });
