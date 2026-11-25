@@ -55,5 +55,5 @@ test('character setup includes orca raccoon and octopus with selected-character 
   assert.ok(root.innerHTML.includes('value="orca"'));
   assert.ok(root.innerHTML.includes('value="raccoon"'));
   assert.ok(root.innerHTML.includes('value="octopus"'));
-  assert.ok(root.innerHTML.includes('RACCOON — AGILE PAWS'));
+  assert.ok(root.innerHTML.includes('Quick paws and agile movement'));
 });
