@@ -17,7 +17,7 @@ const saves = new SaveManager({
   profile: playerProfile, // mutable { name, colour, cheatUnlocked }
   getGameplayState: () => ({ world: worldManager.serialize() }),
   setGameplayState: state => worldManager.deserialize(state.world),
-  totalLevels: 25
+  totalLevels: 15
 });
 ```
 
@@ -37,7 +37,7 @@ Manager dependencies are optional. The save service uses the managers' `serializ
 
 ## Version 1 schema
 
-The JSON includes `version`, `savedAt`, player `name` and hex `colour`, `difficulty`, `cheatUnlocked`, progression level unlocks/completions, Easy/Hard records, permanent Gold levels, boss unlock/defeat state, Orcalord unlock state, `score`, `lives`, `deathCount`, `activePowerUp`, `powerUpProtectionHits`, `checkpoint`, `nextBonusLifeThreshold`, `awardedBonusLifeThresholds`, and `gameplayState`.
+The integrated campaign configures 15 levels; standalone SaveManager callers may pass a different `totalLevels` only when intentionally using it outside the campaign. The JSON includes `version`, `savedAt`, player `name` and hex `colour`, `difficulty`, `cheatUnlocked`, progression level unlocks/completions, Easy/Hard records, permanent Gold levels, boss unlock/defeat state, Orcalord unlock state, `score`, `lives`, `deathCount`, `activePowerUp`, `powerUpProtectionHits`, `checkpoint`, `nextBonusLifeThreshold`, `awardedBonusLifeThresholds`, and `gameplayState`.
 
 `gameplayState.player` captures common position/physics fields (`x`, `y`, `vx`, `vy`, `grounded`, `facing`, `rotation`, `animationState`). Additional world/enemy/object state can be included through `getGameplayState` / `setGameplayState`.
 
