@@ -113,3 +113,21 @@ test('projectiles move in world space and are removed outside bounds', () => {
   const p = new Projectiles(); p.items.push({ x: 5, y: 5, vx: -100, radius: 4, alive: true });
   for (let i = 0; i < 4; i++) p.update(1 / 30, { left: 0, right: 100 }); assert.equal(p.items.length, 0);
 });
+
+test('raccoon and octopus characters have dedicated animated motion profiles', () => {
+  const raccoon = new Orca({ characterType: 'raccoon' });
+  const octopus = new Orca({ characterType: 'octopus' });
+  const orca = new Orca();
+  for (const player of [raccoon, octopus, orca]) player.animation.update(.5);
+  const raccoonPose = raccoon.animation.getMotionPose('swim');
+  const octopusPose = octopus.animation.getMotionPose('swim');
+  const orcaPose = orca.animation.getMotionPose('swim');
+  assert.ok('legs' in raccoonPose && 'paws' in raccoonPose);
+  assert.ok('tentacles' in octopusPose && 'curl' in octopusPose);
+  assert.notDeepEqual(raccoonPose, orcaPose);
+  assert.notDeepEqual(octopusPose, orcaPose);
+  raccoon.customize({characterType:'octopus'});
+  assert.equal(raccoon.characterType,'octopus');
+  assert.equal(raccoon.animation.characterType,'octopus');
+  assert.throws(()=>new Orca({characterType:'dragon'}),/Unknown character type/);
+});
