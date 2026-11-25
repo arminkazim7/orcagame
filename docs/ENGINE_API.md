@@ -190,3 +190,8 @@ Bound keys call `preventDefault` (no page scroll), except with Ctrl/Meta/Alt, an
 4. For physics, call `collision.moveBody(entity, vx * dt, vy * dt)` once per step and react to `hitBottom/hitTop/hitLeft/hitRight`.
 5. Menus: pause with `engine.pause()`; the engine keeps rendering and emitting `frame`, so a pause overlay in `renderUI` and a resume hotkey on `frame` both work.
 6. `src/engine/demo/` is a throw-away test scene. `DemoBox` is **not** the player implementation.
+
+
+## Campaign integration note
+
+The integrated campaign entry point is `src/main.js` with its world lifecycle in `src/worlds/WorldSystem.js`. The standalone engine API documented above describes the reusable `src/engine/` subsystem; do not assume that every engine facility (including its camera and collision registry) is the active campaign implementation. Consult `architecture/INTEGRATION_STATUS.md` for current composition boundaries.
