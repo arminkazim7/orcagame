@@ -71,3 +71,7 @@ The `src/AGENT_*_HANDOFF.md` files are historical specialist handoffs, not autho
 | Checkpoint | White ring with teal center marker | Sets recovery checkpoint |
 
 Collectibles use unique silhouettes rather than a shared generic circle. Regular enemies have separate silhouettes and detailing. All regular enemies are damaging on contact, except a successful downward stomp defeats them instead of hurting the player.
+
+## Level badges and player profile
+
+Each of the 15 levels contains one dedicated collectible badge placed on a platform route. Pick it up to add that level's badge to the profile collection. The in-world HUD provides a **Badges / Profile** button; opening the collection pauses the dive, and **Return to Dive** resumes. The profile shows all 15 level badges, including locked/uncollected ones, and marks collected badges. Badge ownership is stored in portable save files and survives loading. Badge pickup is permanent for the profile (revisiting a level does not duplicate it).
