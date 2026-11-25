@@ -173,3 +173,6 @@ test('clearEnemies resets everything', () => {
   assert.equal(s.bosses.size, 0);
   assert.equal(s.activeBossWorld, null);
 });
+
+
+test('regular enemy contact damage is active for walker, flyer, and shooter types',()=>{clearEnemies();configure({contactGrace:0});for(const type of ['walker','flyer','shooter']){const [e]=spawnEnemies({level:6,difficulty:'easy',platforms:[{x:0,y:400,w:600,h:20}],rng:()=>0});e.type=type;e.x=200;e.y=300;e.speed=0;e.vy=0;const hits=[];const off=events.on('player:damaged',d=>hits.push(d));updateEnemies(0.016,world({player:fakePlayer({x:e.x,y:e.y,w:e.w,h:e.h})}));off?.();assert.ok(hits.some(d=>d.enemyType===type),type+' contact damage expected');clearEnemies();}});
