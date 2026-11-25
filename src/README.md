@@ -6,7 +6,33 @@ HTML5 Canvas and JavaScript ES modules. No runtime dependencies are required.
 
 The runtime now composes the orca's platform physics with a 15-level campaign, five world themes, enemy encounters, five boss fights, collectible power-ups, bonus lives, checkpoints, level progression, the Agent 6 UI, keyboard/touch input, and audio events.
 
-A browser entry point is available at `demo/orca-adventure.html`. Serve the repository over HTTP (for example, `python -m http.server 8000` from the repository root) and open `http://localhost:8000/demo/orca-adventure.html`. The game uses ES modules, so opening the HTML directly as a `file://` URL is not supported by browsers that block module loading from local files.
+A browser entry point is available at `demo/orca-adventure.html`. **Start a local web server before opening the game**; do not open the HTML file directly using a `file://` URL, because the game uses JavaScript ES modules.
+
+### Run the game locally
+
+1. Install Python 3 if it is not already installed (or use another local HTTP server).
+2. Open a terminal in the repository's root folder (the folder containing `demo/` and `src/`).
+3. Start the server:
+
+   **Windows**
+   ```powershell
+   py -m http.server 8000
+   ```
+
+   **macOS / Linux**
+   ```bash
+   python3 -m http.server 8000
+   ```
+
+   If `python3` is unavailable, try `python -m http.server 8000`.
+
+4. Leave the terminal running. Open this address in your browser:
+
+   **[http://localhost:8000/demo/orca-adventure.html](http://localhost:8000/demo/orca-adventure.html)**
+
+5. To stop the server, return to the terminal and press **Ctrl+C**.
+
+If port `8000` is already in use, start the server on another port (for example `8001`) and open the matching URL, such as `http://localhost:8001/demo/orca-adventure.html`.
 
 ## Setup and verification
 
