@@ -4,14 +4,14 @@
 
 - `Orca.js` — playable orca entity, customization, damage, power-up hooks, shooting, and event emission.
 - `OrcaPhysics.js` — deterministic movement, gravity, jump and platform collision.
-- `OrcaAnimation.js` — swim/idle/jump/fall poses and 15 named victory moves.
+- `OrcaAnimation.js` — character-specific idle/swim/jump/fall motion profiles and 15 named victory moves.
 - `Projectiles.js` — world-space projectile lifecycle and rendering.
 
 Import from `src/player/index.js`:
 
 ```js
 import { Orca, VICTORY_ANIMATIONS } from './src/player/index.js';
-const orca = new Orca({ x: 100, y: 300, name: 'Orca', color: 'classic', events });
+const orca = new Orca({ x: 100, y: 300, name: 'Orca', color: 'classic', characterType: 'orca', events });
 ```
 
 ## Engine lifecycle contract
@@ -29,7 +29,7 @@ Platforms use `{ x, y, width, height, oneWay }`. `oneWay: true` permits upward p
 | `update(dt, input, platforms, options?)` | Advance physics, shooting, projectiles, and animation. |
 | `render(ctx, cameraX?)` | Draw the anatomically correct orca and projectiles. |
 | `shoot()` | Fire one projectile in the current facing direction. |
-| `customize({ name?, color? })` | Set display name and palette (`classic`, `midnight`, `teal`, `rose`, `gold`). |
+| `customize({ name?, color?, characterType? })` | Set display name and palette (`classic`, `midnight`, `teal`, `rose`, `gold`). |
 | `setSize(scale)` | Set absolute size multiplier; clamped to 0.65–2.25. |
 | `setJumpStrength(multiplier)` | Set jump velocity multiplier; clamped to 0.5–2.5. |
 | `applyPowerUp(type)` | Apply one progression-selected power-up and replace any previous one. |
@@ -69,3 +69,12 @@ Each move has its own motion profile and visible effect layer. All poses preserv
 - Connect `player.jump` to the audio manager's jump sound. Do not emit it for drop-through.
 - Connect `player.victoryAnimationStarted` to the victory UI and completion fanfare; respect audio settings in the audio module.
 - Enemy/combat code can inspect `orca.projectiles.items`, mark a hit projectile's `alive = false`, and remove it on the next update.
+
+
+## Playable characters
+
+- `orca`: streamlined orca with tail fluke and pectoral-fin swim motion.
+- `raccoon`: grey-brown raccoon with face mask, ears, ringed bushy tail, and animated paws.
+- `octopus`: purple octopus with mantle, expressive eyes, and eight animated tentacles.
+
+Character IDs are `orca`, `raccoon`, and `octopus`. Choose one in the character setup menu; the selection is included in portable saves. Character animations reuse shared physics and the runtime's single animation loop.
