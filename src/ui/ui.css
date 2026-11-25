@@ -12,3 +12,48 @@
 .orca-ui:has(.orca-hud) .orca-mobile-controls{pointer-events:none}
 
 .orca-victory-preview{display:block;width:min(100%,480px);height:auto;aspect-ratio:2/1;margin:18px auto;border:2px solid #51c5d2;background:#07334d;image-rendering:pixelated;box-shadow:4px 4px 0 #021b31}
+
+/* Expedition atlas world map */
+.map-intro{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;margin:4px 0 16px}
+.map-intro .orca-lead{margin:0;max-width:540px}
+.map-progress{display:grid;grid-template-columns:repeat(3,auto);gap:8px 14px;align-items:center;padding:10px 13px;border:1px solid #3b9bad;background:linear-gradient(135deg,#062d49eF,#0a5264eF);box-shadow:inset 0 0 18px #46d3e31a}
+.map-progress>div:not(.map-progress-bar){display:grid;gap:2px;text-align:center}
+.map-progress b{font-size:19px;color:#fff2ad}
+.map-progress small{font-size:8px;letter-spacing:.09em;color:#a8dbe4;white-space:nowrap}
+.map-progress-bar{grid-column:1/-1;height:5px;background:#031e35;overflow:hidden}
+.map-progress-bar i{display:block;width:var(--progress);height:100%;background:linear-gradient(90deg,#40c6d1,#f2c14e);box-shadow:0 0 8px #83f3ff}
+.orca-map.map-atlas{height:clamp(380px,62vw,510px);max-width:760px;border:3px solid #4ab7c8;border-radius:10px;background:radial-gradient(ellipse at 52% 20%,#13778a 0,#07506c 42%,#032640 100%);box-shadow:0 0 0 4px #032237,0 10px 25px #001321a8,inset 0 0 55px #001827;isolation:isolate}
+.map-grid{position:absolute;inset:0;opacity:.2;background-image:linear-gradient(#8cecf2 1px,transparent 1px),linear-gradient(90deg,#8cecf2 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)}
+.map-region{position:absolute;left:3%;right:3%;height:19%;border:1px solid #7ee3df38;border-radius:48% 42% 46% 38%;background:radial-gradient(ellipse at 40% 50%,#48c7c52b,transparent 70%);pointer-events:none}
+.map-region:after{content:"";position:absolute;inset:18% 8%;border:1px dashed #9af4e82a;border-radius:50%}
+.orca-map.map-atlas svg{z-index:0}
+.orca-map .map-route-shadow{fill:none;stroke:#032238;stroke-width:12;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
+.orca-map .map-route{fill:none;stroke:#a1f4e7;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:3 9;filter:drop-shadow(0 0 5px #76f5ee);opacity:.9}
+.orca-map .orca-world-label{z-index:1;left:2%;top:calc(var(--world-row)*18.5% + 1%);display:grid;gap:2px;padding:5px 8px;border-left:3px solid #f2c14e;background:#03283bc9;box-shadow:2px 2px 0 #021827}
+.orca-world-label span{font-size:8px;color:#f2c14e;letter-spacing:.16em}
+.orca-world-label b{font-size:10px;color:#e6fbff;letter-spacing:.08em;text-transform:uppercase}
+.orca-map .map-node{z-index:2;display:grid;place-content:center;gap:1px;width:43px;height:43px;border-radius:50%;border-width:2px;background:radial-gradient(circle at 35% 28%,#fff 0 4%,transparent 6%),linear-gradient(145deg,#d8faff,#74aebb);color:#05283b;box-shadow:0 0 0 4px #07334eaa,0 0 13px #a6faff88,3px 4px 0 #021a2c;transition:transform .16s,box-shadow .16s}
+.orca-map .map-node b{font-size:12px;line-height:1}
+.orca-map .map-node small{font-size:6px;line-height:1;letter-spacing:.03em}
+.orca-map .map-node:hover:not(:disabled),.orca-map .map-node:focus-visible{z-index:4;transform:translate(-50%,-50%) scale(1.18);box-shadow:0 0 0 5px #fff9,0 0 20px #b5ffff}
+.orca-map .map-node.gold{background:radial-gradient(circle at 35% 28%,#fff8d4,#eebc42 72%);border-color:#fff0ad;color:#3b2907;box-shadow:0 0 0 4px #77571c88,0 0 17px #ffe18b}
+.orca-map .map-node.green{background:radial-gradient(circle at 35% 28%,#e5fff4,#43bf8d 72%);border-color:#b9ffdc;color:#063c2c}
+.orca-map .map-node.available{background:radial-gradient(circle at 35% 28%,#fff,#83d5e4 75%);border-color:#e1fcff;color:#07334a;animation:map-pulse 2.4s ease-in-out infinite}
+.orca-map .map-node.locked{background:linear-gradient(145deg,#536c7a,#344b5a);border-color:#8aa0aa;color:#d2e1e6;opacity:.78;box-shadow:0 0 0 3px #142d3b}
+.map-boss-wrap{position:absolute;z-index:2;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:1px;min-width:32px}
+.map-boss-wrap small{font-size:7px;letter-spacing:.1em;color:#ffe5a1;text-shadow:1px 1px #001c30}
+.orca-map .map-boss{position:static;transform:none;display:grid;place-items:center;width:36px;height:36px;border:2px solid #ffe5a1;border-radius:9px;background:linear-gradient(145deg,#9a692a,#513b29);color:#fff1ae;font-size:22px;box-shadow:0 0 0 3px #372b1d99,0 0 15px #ffcf6b88}
+.orca-map .map-boss.locked{filter:grayscale(1);opacity:.65}
+.orca-map .map-boss.open{animation:map-boss-glow 1.8s ease-in-out infinite}
+.orca-map .map-boss.defeated{background:linear-gradient(145deg,#e8d37b,#9b7935);color:#fff;border-color:#fff5c3}
+.map-compass{position:absolute;right:12px;top:10px;z-index:1;text-align:center;color:#b8f5f3;font-size:9px;line-height:1.3;text-shadow:0 0 6px #6ff}
+.map-compass br{line-height:1}
+.map-depth{position:absolute;right:10px;bottom:8px;color:#8bcbd3;font-size:8px;letter-spacing:.12em;text-shadow:1px 1px #001c30}
+.map-legend{gap:10px 18px;padding:10px 12px;margin:10px auto;max-width:720px;border:1px solid #287c8d;background:#042a43b8}
+.map-legend i{width:11px;height:11px;border-radius:50%;box-shadow:0 0 6px currentColor}
+.map-legend .gold{background:#f2c14e}.map-legend .green{background:#45c486}.map-legend .available{background:#a9e5ef}.map-legend .locked{background:#667d89}
+.map-legend .boss-key{width:auto;height:auto;border:0;background:none;color:#f2c14e;box-shadow:none;font-style:normal;font-size:14px}
+@keyframes map-pulse{0%,100%{box-shadow:0 0 0 4px #07334eaa,0 0 9px #a6faff88,3px 4px 0 #021a2c}50%{box-shadow:0 0 0 6px #07334eaa,0 0 19px #c8ffff,3px 4px 0 #021a2c}}
+@keyframes map-boss-glow{0%,100%{box-shadow:0 0 0 3px #372b1d99,0 0 9px #ffcf6b88}50%{box-shadow:0 0 0 5px #ffcf6b33,0 0 22px #ffcf6b}}
+@media(max-width:680px){.map-intro{grid-template-columns:1fr}.map-progress{grid-template-columns:repeat(3,minmax(0,1fr))}.orca-map.map-atlas{height:430px}.orca-map .map-node{width:36px;height:36px}.orca-map .orca-world-label{font-size:8px}.orca-map .orca-world-label b{font-size:8px}.map-depth{font-size:6px}}
+@media(prefers-reduced-motion:reduce){.orca-map .map-node.available,.orca-map .map-boss.open{animation:none}}
