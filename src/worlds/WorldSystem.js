@@ -147,10 +147,21 @@ export class WorldSystem {
       this.events.emit('player.damaged', { amount: 1, source: 'fall', applied: true });
       const respawn = this.checkpoints.getRespawnPosition(level.start);
       this.player.x = respawn.x;
-      this.player.y = respawn.y;
+      // Respawn coordinates are authored as a safe anchor, not guaranteed to be
+      // exactly flush with the collision surface. Snap the player onto the nearest
+      // supporting platform beneath that anchor so gravity cannot carry them through it.
+      const playerBottom = respawn.y + this.player.height;
+      const support = level.platforms
+        .filter(platform =>
+          this.player.x + this.player.width > platform.x &&
+          this.player.x < platform.x + platform.w &&
+          platform.y >= playerBottom - 6
+        )
+        .sort((a, b) => a.y - b.y)[0];
+      this.player.y = support ? support.y - this.player.height : level.start.y;
       this.player.vx = 0;
       this.player.vy = 0;
-      this.player.grounded = false;
+      this.player.grounded = Boolean(support);
       this.player.physics.resetTransientState?.();
       // The all-lives recovery flow already applies its longer protection window.
       if (!state.gameplay.paused) this.player.setInvulnerable(1100);
