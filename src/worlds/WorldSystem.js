@@ -195,39 +195,61 @@ export class WorldSystem {
     };
   }
 
-  restoreState(snapshot) {
-    if (snapshot == null) return false;
-    if (!Number.isInteger(snapshot.level) || snapshot.level < 1 || snapshot.level > 15 ||
+  validateSnapshot(snapshot) {
+    if (snapshot == null) return true;
+    if (!snapshot || !Number.isInteger(snapshot.level) || snapshot.level < 1 || snapshot.level > 15 ||
         !Number.isFinite(snapshot.elapsed) || snapshot.elapsed < 0 ||
         !Number.isFinite(snapshot.cameraX) || snapshot.cameraX < 0 ||
         typeof snapshot.completed !== 'boolean' || !Array.isArray(snapshot.collectibles) ||
         !snapshot.encounter || typeof snapshot.encounter !== 'object') {
       throw new TypeError('Invalid saved world state');
     }
-    const savedLevelStart = this.lives?.levelStart ? { ...this.lives.levelStart } : null;
-    const savedCheckpoint = this.checkpoints?.serialize?.() ?? null;
-    this.startLevel(snapshot.level);
-    if (savedLevelStart && this.lives) this.lives.levelStart = savedLevelStart;
-    if (savedCheckpoint !== null) this.checkpoints?.deserialize?.(savedCheckpoint);
-    this.elapsed = snapshot.elapsed;
-    this.cameraX = Math.max(0, Math.min(this.level.width - (this.canvas?.width ?? 960), snapshot.cameraX));
-    this.state.gameplay.cameraX = this.cameraX;
-    this.state.gameplay.elapsedSeconds = snapshot.elapsed;
-    this.completed = snapshot.completed;
-    const collected = new Map(snapshot.collectibles.map(item => [item.id, item.collected]));
-    for (const item of this.level.collectibles) {
-      if (collected.has(item.id)) item.collected = collected.get(item.id) === true;
+    const expected = createLevel(snapshot.level);
+    const expectedItems = new Map(expected.collectibles.map(item => [item.id, item]));
+    if (snapshot.collectibles.length !== expected.collectibles.length ||
+        snapshot.collectibles.some(item => !item || !expectedItems.has(item.id) || typeof item.collected !== 'boolean') ||
+        new Set(snapshot.collectibles.map(item => item.id)).size !== snapshot.collectibles.length) {
+      throw new TypeError('Saved collectibles do not match the active level');
     }
-    this.encounters.restoreEncounter(snapshot.encounter);
-    this.bossEncounterStarted = Boolean(this.level.boss && snapshot.encounter.bosses.some(boss => boss.world === this.level.boss.world));
-    if (snapshot.encounter.bosses.length && !this.bossEncounterStarted) {
+    this.encounters.validateEncounterSnapshot(snapshot.encounter);
+    const bosses = snapshot.encounter.bosses;
+    if (bosses.length > 1 || bosses.some(boss => !expected.boss || boss.world !== expected.boss.world) ||
+        (snapshot.encounter.activeBossWorld != null && snapshot.encounter.activeBossWorld !== expected.boss?.world)) {
       throw new TypeError('Saved boss encounter does not match the active level');
-    }
-    if (this.bossEncounterStarted) {
-      this.events.emit('boss.started', { bossId: this.level.boss.id, world: this.level.boss.world, restored: true });
     }
     return true;
   }
+
+  restore(snapshot) {
+    if (snapshot == null) {
+      this.level = null;
+      this.encounters.clearEnemies();
+      this.completed = false;
+      this.bossEncounterStarted = false;
+      return true;
+    }
+    this.validateSnapshot(snapshot);
+    const level = createLevel(snapshot.level);
+    const collected = new Map(snapshot.collectibles.map(item => [item.id, item.collected]));
+    for (const item of level.collectibles) item.collected = collected.get(item.id);
+    this.level = level;
+    this.elapsed = snapshot.elapsed;
+    this.cameraX = Math.max(0, Math.min(level.width - (this.canvas?.width ?? 960), snapshot.cameraX));
+    this.cameraY = 0;
+    this.completed = snapshot.completed;
+    this.bossEncounterStarted = Boolean(level.boss && snapshot.encounter.bosses.some(boss => boss.world === level.boss.world));
+    this.hudElapsed = 0;
+    this.state.status = this.completed ? 'victory' : 'playing';
+    this.state.gameplay.elapsedSeconds = this.elapsed;
+    this.state.gameplay.cameraX = this.cameraX;
+    this.state.gameplay.paused = false;
+    this.player.physics.gravity = level.gravity;
+    this.player.projectiles?.clear?.();
+    this.encounters.restoreEncounter(snapshot.encounter);
+    return true;
+  }
+
+  restoreState(snapshot) { return this.restore(snapshot); }
 
   render(ctx) {
     this.renderer.render(this, ctx);
