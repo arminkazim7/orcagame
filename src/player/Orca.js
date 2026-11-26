@@ -45,7 +45,7 @@ export class Orca {
       onJump: () => this.#emit('player.jump', { x: this.x, y: this.y }),
       onDropThrough: () => this.#emit('player.dropThrough', { x: this.x, y: this.y })
     });
-    const shooting = inputDown(input, PLAYER_CONTROLS.shoot);
+    const shooting = inputDown(input, PLAYER_CONTROLS.shoot, 'shoot');
     if (shooting) this.shoot();
     this.shootWasDown = shooting;
     this.projectiles.update(dt, options.projectileBounds ?? null);
