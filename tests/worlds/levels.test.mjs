@@ -162,3 +162,16 @@ test('authored hazards apply combat damage through the shared event bus', () => 
     assert.equal(game.lives.getLives(), before - 1);
   } finally { game.dispose(); clearEnemies(); }
 });
+
+
+test('authored checkpoints are placed on reachable support surfaces', () => {
+  for (const level of LEVELS) {
+    const checkpoint = level.collectibles.find(item => item.type === 'checkpoint');
+    assert.ok(checkpoint);
+    const support = level.platforms.find(platform =>
+      checkpoint.x >= platform.x && checkpoint.x + 30 <= platform.x + platform.w &&
+      Math.abs((checkpoint.y + 15) - platform.y) <= 0.01
+    );
+    assert.ok(support, `level ${level.number} checkpoint should align with a platform top`);
+  }
+});
