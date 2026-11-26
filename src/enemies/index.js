@@ -454,22 +454,26 @@ function clearEnemies() {
  * Static boss definitions are referenced by world number and reattached on restore.
  */
 function serializeEncounter() {
-  const plain = value => JSON.parse(JSON.stringify(value));
+  const fields = {
+    enemy: ['id','type','x','y','vx','vy','dead','hitFlash','touchCooldown','t','difficultyKey','palette','w','h','hp','speed','dir','patrolMin','patrolMax','hoverAmp','hoverFreq','fireCooldown','fireTimer','range'],
+    projectile: ['id','x','y','vx','vy','owner','damage','radius','gravity','color','ttl'],
+    particle: ['x','y','vx','vy','life','maxLife','size','color'],
+    boss: ['id','world','arena','x','y','vx','vy','dir','w','h','health','maxHealth','attackTimer','dashState','teleportCooldown','minionsSpawned','phase','defeated','defeatTimer','hitFlash','difficultyKey','defeatEventSent','attackCount']
+  };
+  const pick = (value, keys) => Object.fromEntries(keys.filter(key => value[key] !== undefined).map(key => [key, value[key]]));
   return {
-    enemies: plain(state.enemies),
-    projectiles: plain(state.projectiles),
-    particles: plain(state.particles),
-    bosses: [...state.bosses.values()].map(boss => {
-      const { def, ...snapshot } = boss;
-      return plain(snapshot);
-    }),
+    schemaVersion: 1,
+    enemies: state.enemies.map(value => pick(value, fields.enemy)),
+    projectiles: state.projectiles.map(value => pick(value, fields.projectile)),
+    particles: state.particles.map(value => pick(value, fields.particle)),
+    bosses: [...state.bosses.values()].map(value => pick(value, fields.boss)),
     activeBossWorld: state.activeBossWorld
   };
 }
 
 /** Restore a previously validated encounter snapshot after the target level is spawned. */
 function validateEncounterSnapshot(snapshot) {
-  if (!snapshot || !Array.isArray(snapshot.enemies) || !Array.isArray(snapshot.projectiles) ||
+  if (!snapshot || snapshot.schemaVersion !== 1 || !Array.isArray(snapshot.enemies) || !Array.isArray(snapshot.projectiles) ||
       !Array.isArray(snapshot.particles) || !Array.isArray(snapshot.bosses)) {
     throw new TypeError('Invalid encounter snapshot');
   }
