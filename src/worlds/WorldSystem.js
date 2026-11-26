@@ -26,6 +26,7 @@ export class WorldSystem {
     this.cameraX = 0;
     this.cameraY = 0;
     this.completed = false;
+    this.bossEncounterStarted = false;
     this.elapsed = 0;
     this.hudElapsed = 0;
     this.playerCombatant = {
@@ -97,14 +98,6 @@ export class WorldSystem {
       difficulty: this.progression.difficulty,
       platforms: level.platforms.filter(platform => platform.oneWay)
     });
-    if (level.boss) {
-      spawnBoss({
-        world: level.boss.world,
-        difficulty: this.progression.difficulty,
-        arena: level.boss.arena
-      });
-      this.events.emit('boss.started', { bossId: level.boss.id, world: level.boss.world });
-    }
     this.ui?.showGameplay?.({ level: number, world: level.world.name });
     this.ui?.updateHUD?.({ level: number, world: level.world.name, difficulty: this.progression.difficulty });
     return level;
@@ -122,6 +115,19 @@ export class WorldSystem {
       this.player.x - (this.canvas?.width ?? 960) * 0.36));
     state.gameplay.cameraX = this.cameraX;
     this.cameraY = Math.max(0, Math.min(level.height - (this.canvas?.height ?? 540), this.player.y - (this.canvas?.height ?? 540) * 0.38));
+
+    // The boss encounter begins only when the player reaches the arena boundary.
+    // Until then the boss does not exist and cannot patrol or attack from off-screen.
+    if (level.boss && !this.bossEncounterStarted &&
+        this.player.x + this.player.width >= level.boss.arena.x) {
+      spawnBoss({
+        world: level.boss.world,
+        difficulty: this.progression.difficulty,
+        arena: level.boss.arena
+      });
+      this.bossEncounterStarted = true;
+      this.events.emit('boss.started', { bossId: level.boss.id, world: level.boss.world });
+    }
 
     const world = {
       player: this.playerCombatant,
@@ -162,7 +168,7 @@ export class WorldSystem {
       else if (item.type === 'checkpoint') this.checkpoints.activateCheckpoint({ id: item.id, x: item.x, y: item.y - this.player.height, level: level.number });
     }
 
-    const boss = level.boss ? getBoss(level.boss.world) : null;
+    const boss = level.boss && this.bossEncounterStarted ? getBoss(level.boss.world) : null;
     const exit = level.exit;
     const atExit = intersects(this.playerCombatant.getBounds(), exit);
     if (atExit && (!level.boss || boss?.defeatEventSent)) this.#completeLevel(level.boss?.id ?? null);
@@ -233,9 +239,12 @@ export class WorldSystem {
       if (collected.has(item.id)) item.collected = collected.get(item.id) === true;
     }
     restoreEncounter(snapshot.encounter);
-    if (this.level.boss) {
-      const boss = getBoss(this.level.boss.world);
-      if (!boss) throw new TypeError('Saved boss encounter is missing its level boss');
+    this.bossEncounterStarted = Boolean(this.level.boss && snapshot.encounter.bosses.some(boss => boss.world === this.level.boss.world));
+    if (snapshot.encounter.bosses.length && !this.bossEncounterStarted) {
+      throw new TypeError('Saved boss encounter does not match the active level');
+    }
+    if (this.bossEncounterStarted) {
+      this.events.emit('boss.started', { bossId: this.level.boss.id, world: this.level.boss.world, restored: true });
     }
     return true;
   }
