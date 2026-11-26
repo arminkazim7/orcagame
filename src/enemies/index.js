@@ -23,14 +23,11 @@ const state = {
   stompEnabled: true,       // "optional stomp defeat"
   rng: options.rng ?? Math.random,
   contactGrace: options.contactGrace ?? 0.6,
-  nextId: 1,        // seconds between repeated contact-damage hits
+  nextId: 1,
 };
 
-/** Listen to progression events: 'player:damaged', 'enemy:defeated',
- *  'enemy:stomped', 'boss:damaged', 'boss:defeating', 'boss:defeated'. */
-export const events = state.events;
 
-/** Configure module-level options. */
+/** Configure this encounter instance. */
 function configure({ stompEnabled, rng, contactGrace } = {}) {
   if (stompEnabled !== undefined) state.stompEnabled = !!stompEnabled;
   if (rng) state.rng = rng;
@@ -513,10 +510,7 @@ function restoreEncounter(snapshot) {
 /** Read-only enemy list used by world collision resolution. */
 function getEnemiesForCollision() { return state.enemies; }
 
-/** Test/debug accessor. */
-function _getState() {
-  return state;
-}
+function getEnemiesForCollision() { return state.enemies; }
 
 
     Object.assign(this, { configure, spawnEnemies, updateEnemies, damageEnemy, spawnBoss, damageBoss, updateBoss, isBossDefeated, getBoss, renderEnemies, clearEnemies, serializeEncounter, restoreEncounter, getEnemiesForCollision });
