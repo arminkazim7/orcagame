@@ -30,6 +30,7 @@ export class WorldSystem {
     this.bossEncounterStarted = false;
     this.elapsed = 0;
     this.hudElapsed = 0;
+    this.fallRecoveryMs = 0;
     this.encounters = new EncounterSystem(events);
     this.renderer = new LevelRenderer();
     this.combat = new CombatResolver({ events, lives, state, player, ui, getLevel: () => this.level });
@@ -141,31 +142,28 @@ export class WorldSystem {
       break;
     }
 
-    // A void fall bypasses combat i-frames: it must always cost a life.
-    // Trigger shortly below the ground rather than at the bottom of the full world bounds.
+    // Void fall: respawn at the level's canonical start anchor, not the checkpoint.
+    // The start floor is always a solid floor (oneWay=false), so place the player
+    // exactly on its top and suppress the fall trigger during recovery.
     if (this.player.y > GAME_CONFIG.physics.groundY + 120) {
       this.events.emit('player.damaged', { amount: 1, source: 'fall', applied: true });
-      const respawn = this.checkpoints.getRespawnPosition(level.start);
-      this.player.x = respawn.x;
-      // Respawn coordinates are authored as a safe anchor, not guaranteed to be
-      // exactly flush with the collision surface. Snap the player onto the nearest
-      // supporting platform beneath that anchor so gravity cannot carry them through it.
-      const playerBottom = respawn.y + this.player.height;
-      const support = level.platforms
-        .filter(platform =>
-          this.player.x + this.player.width > platform.x &&
-          this.player.x < platform.x + platform.w &&
-          platform.y >= playerBottom - 6
-        )
+      const startFloor = level.platforms
+        .filter(platform => !platform.oneWay && this.player.x + this.player.width > platform.x &&
+          this.player.x < platform.x + platform.w)
         .sort((a, b) => a.y - b.y)[0];
-      this.player.y = support ? support.y - this.player.height : level.start.y;
+      const respawnX = level.start.x;
+      const safeFloor = level.platforms.find(platform => !platform.oneWay &&
+        respawnX + this.player.width > platform.x && respawnX < platform.x + platform.w);
+      this.player.x = respawnX;
+      this.player.y = (safeFloor ?? startFloor)?.y - this.player.height ?? level.start.y;
       this.player.vx = 0;
       this.player.vy = 0;
-      this.player.grounded = Boolean(support);
+      this.player.grounded = Boolean(safeFloor ?? startFloor);
       this.player.physics.resetTransientState?.();
-      // The all-lives recovery flow already applies its longer protection window.
-      if (!state.gameplay.paused) this.player.setInvulnerable(1100);
+      this.player.setInvulnerable(1100);
+      this.fallRecoveryMs = 1200;
     }
+    if (this.fallRecoveryMs > 0) this.fallRecoveryMs = Math.max(0, this.fallRecoveryMs - dt * 1000);
 
     // Enemies are solid obstacles: stop horizontal player movement at their sides.
     // Stomped/dead enemies and upward bounce motion are intentionally not blocked.
