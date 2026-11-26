@@ -141,19 +141,19 @@ export class WorldSystem {
       break;
     }
 
-    // Gaps are intentional: falling below the playable world costs a life and
-    // returns the player to the active checkpoint (or this level's start).
-    if (this.player.y > level.height + 90) {
-      if (!this.player.isInvulnerable && this.player.takeDamage({ emitEvent: false, source: 'fall', knockback: false })) {
-        this.events.emit('player.damaged', { amount: 1, source: 'fall', applied: true });
-      }
+    // A void fall bypasses combat i-frames: it must always cost a life.
+    // Trigger shortly below the ground rather than at the bottom of the full world bounds.
+    if (this.player.y > GAME_CONFIG.physics.groundY + 120) {
+      this.events.emit('player.damaged', { amount: 1, source: 'fall', applied: true });
       const respawn = this.checkpoints.getRespawnPosition(level.start);
       this.player.x = respawn.x;
       this.player.y = respawn.y;
       this.player.vx = 0;
       this.player.vy = 0;
       this.player.grounded = false;
-      this.player.setInvulnerable(1100);
+      this.player.physics.resetTransientState?.();
+      // The all-lives recovery flow already applies its longer protection window.
+      if (!state.gameplay.paused) this.player.setInvulnerable(1100);
     }
 
     // Enemies are solid obstacles: stop horizontal player movement at their sides.
