@@ -276,6 +276,32 @@ test('falling through an authored terrain gap costs a life and respawns safely',
     assert.ok(game.player.invulnerabilityMs > 0);
   } finally { game.dispose(); game.world.encounters.clearEnemies(); }
 });
+ 
+test('void falls bypass invulnerability and respawn safely in every campaign level', () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    for (let number = 1; number <= 15; number++) {
+      const level = game.startLevel(number);
+      const before = game.lives.getLives();
+      // Simulate a fall while the player still has spawn/respawn protection.
+      game.player.setInvulnerable(5000);
+      game.player.x = 150;
+      game.player.y = GAME_CONFIG.physics.groundY + 130;
+      game.player.vx = 0;
+      game.player.vy = 0;
+      game.world.update(1 / 60, game.state, game.events, game.input);
+      assert.equal(game.lives.getLives(), before - 1, `level ${number}: void fall must cost a life despite invulnerability`);
+      assert.equal(game.player.x, level.start.x, `level ${number}: respawn should return to level start`);
+      assert.equal(game.player.y, level.start.y, `level ${number}: respawn should use the safe start height`);
+      for (let frame = 0; frame < 12; frame++) game.world.update(1 / 60, game.state, game.events, game.input);
+      assert.equal(game.lives.getLives(), before - 1, `level ${number}: safe respawn must not repeatedly fall`);
+      assert.ok(game.player.grounded, `level ${number}: player should land on the starting floor`);
+    }
+  } finally {
+    game.dispose();
+    game.world.encounters.clearEnemies();
+  }
+});
 
 test('authored hazards apply combat damage through the shared event bus', () => {
   const game = createGameRuntime({ audioEnabled: false });
