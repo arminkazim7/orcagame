@@ -86,6 +86,7 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
   ui?.showMainMenu();
   const keyActions = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', Space: 'jump', ArrowUp: 'jump', KeyW: 'jump', ArrowDown: 'dropThrough', KeyS: 'dropThrough', KeyX: 'shoot', KeyF: 'shoot' };
   const keyTarget = typeof document !== 'undefined' ? document : (typeof window !== 'undefined' ? window : null);
+  const blurTarget = typeof window !== 'undefined' ? window : keyTarget;
   const isInteractiveTarget = target => Boolean(target?.closest?.('input,textarea,select,[contenteditable="true"]'));
   const codeFor = event => event.code || ({ ArrowLeft:'ArrowLeft', ArrowRight:'ArrowRight', ArrowUp:'ArrowUp', ArrowDown:'ArrowDown', ' ':'Space', a:'KeyA', A:'KeyA', d:'KeyD', D:'KeyD', w:'KeyW', W:'KeyW', s:'KeyS', S:'KeyS', x:'KeyX', X:'KeyX', f:'KeyF', F:'KeyF' }[event.key] ?? '');
   const onKeyDown = event => {
@@ -116,7 +117,7 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
   };
   keyTarget?.addEventListener('keydown', onKeyDown, true);
   keyTarget?.addEventListener('keyup', onKeyUp, true);
-  keyTarget?.addEventListener('blur', onBlur);
+  blurTarget?.addEventListener('blur', onBlur);
   if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVisibilityChange);
   systems.push(world);
   function frame(timestamp) {
@@ -141,6 +142,6 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
     start() { if (running || typeof requestAnimationFrame !== 'function') return false; running = true; previous = null; raf = requestAnimationFrame(frame); return true; },
     stop() { running = false; if (raf !== null && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(raf); raf = null; previous = null; input.releaseAll(); },
     async unlockAudio() { return audio?.unlockAudio(); },
-    dispose() { this.stop(); keyTarget?.removeEventListener('keydown', onKeyDown, true); keyTarget?.removeEventListener('keyup', onKeyUp, true); keyTarget?.removeEventListener('blur', onBlur); if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibilityChange); world.dispose(); ui?.dispose?.(); audio?.dispose?.(); bus.clear(); }
+    dispose() { this.stop(); keyTarget?.removeEventListener('keydown', onKeyDown, true); keyTarget?.removeEventListener('keyup', onKeyUp, true); blurTarget?.removeEventListener('blur', onBlur); if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibilityChange); world.dispose(); ui?.dispose?.(); audio?.dispose?.(); bus.clear(); }
   };
 }
