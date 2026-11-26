@@ -100,9 +100,18 @@ export class WorldSystem {
     if (!this.level || this.completed || state.gameplay.paused) return;
     this.elapsed += dt;
     const level = this.level;
-    this.player.update(dt, input, level.platforms, {
-      projectileBounds: { left: 0, right: level.width }
-    });
+    // Briefly freeze player physics after a void respawn. This prevents an
+    // immediate second fall while the collision state settles at the spawn floor.
+    if (this.fallRecoveryMs > 0) {
+      this.fallRecoveryMs = Math.max(0, this.fallRecoveryMs - dt * 1000);
+      this.player.vx = 0;
+      this.player.vy = 0;
+      this.player.grounded = true;
+    } else {
+      this.player.update(dt, input, level.platforms, {
+        projectileBounds: { left: 0, right: level.width }
+      });
+    }
     this.player.x = Math.max(0, Math.min(level.width - this.player.width, this.player.x));
     this.cameraX = Math.max(0, Math.min(level.width - GAME_CONFIG.canvas.width,
       this.player.x - GAME_CONFIG.canvas.width * 0.36));
