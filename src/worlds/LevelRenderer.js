@@ -1,5 +1,3 @@
-import { renderEnemies } from '../enemies/index.js';
-
 /** Draws the active level and its world-space entities. */
 export class LevelRenderer {
   render(world, ctx) {
@@ -41,7 +39,7 @@ export class LevelRenderer {
     ctx.fillRect(level.exit.x + 10, level.exit.y + 10, level.exit.w - 20, level.exit.h - 10);
     for (const item of level.collectibles) this.#drawCollectible(ctx, item);
     world.player.render(ctx);
-    renderEnemies(ctx, { x: world.cameraX, y: world.cameraY });
+    world.encounters.renderEnemies(ctx, { x: world.cameraX, y: world.cameraY });
     ctx.restore();
   }
 
