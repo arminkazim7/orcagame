@@ -4,6 +4,21 @@ const POWER_UP_IDS = new Set(['sea-berry', 'golden-krill', 'bubble-shell']);
 const isObject = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 const isInt = (v, min = 0, max = Number.MAX_SAFE_INTEGER) => Number.isSafeInteger(v) && v >= min && v <= max;
 const clone = value => JSON.parse(JSON.stringify(value));
+const ENCOUNTER_FIELDS = {
+  enemy: ['id','type','x','y','vx','vy','dead','hitFlash','touchCooldown','t','difficultyKey','palette','w','h','hp','speed','dir','patrolMin','patrolMax','hoverAmp','hoverFreq','fireCooldown','fireTimer','range'],
+  projectile: ['id','x','y','vx','vy','owner','damage','radius','gravity','color','ttl'],
+  particle: ['x','y','vx','vy','life','maxLife','size','color'],
+  boss: ['id','world','arena','x','y','vx','vy','dir','w','h','health','maxHealth','attackTimer','dashState','teleportCooldown','minionsSpawned','phase','defeated','defeatTimer','hitFlash','difficultyKey','defeatEventSent','attackCount']
+};
+function migrateEncounter(snapshot) {
+  if (!isObject(snapshot) || snapshot.schemaVersion === 1) return;
+  const pick = (value, keys) => Object.fromEntries(keys.filter(key => value?.[key] !== undefined).map(key => [key, value[key]]));
+  for (const [field, type] of [['enemies','enemy'],['projectiles','projectile'],['particles','particle'],['bosses','boss']]) {
+    if (Array.isArray(snapshot[field])) snapshot[field] = snapshot[field].map(value => pick(value, ENCOUNTER_FIELDS[type]));
+  }
+  snapshot.schemaVersion = 1;
+}
+
 
 /** Portable, manually transferable JSON save service. Browser APIs are used only by download/picker methods. */
 export class SaveManager {
@@ -149,7 +164,10 @@ export class SaveManager {
     if (input.version === 1) {
       const migrated = clone(input);
       migrated.version = SAVE_VERSION;
-      if (isObject(migrated.gameplayState)) delete migrated.gameplayState.paused;
+      if (isObject(migrated.gameplayState)) {
+        delete migrated.gameplayState.paused;
+        if (isObject(migrated.gameplayState.world) && isObject(migrated.gameplayState.world.encounter)) migrateEncounter(migrated.gameplayState.world.encounter);
+      }
       return migrated;
     }
     return clone(input);
