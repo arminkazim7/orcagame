@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createLevel, LEVELS } from '../../src/worlds/levels.js';
 import { createGameRuntime } from '../../src/main.js';
-import { getBoss, damageBoss, clearEnemies, _getState as getEnemyState } from '../../src/enemies/index.js';
 
 test('campaign contains fifteen valid layouts across five worlds', () => {
   assert.equal(LEVELS.length, 15);
@@ -54,7 +53,7 @@ test('runtime starts a level, spawns enemies and creates the configured boss', (
     assert.equal(game.state.status, 'playing');
     assert.equal(game.player.x, level.start.x);
     assert.ok(game.world.level);
-    assert.ok(getBoss(1));
+    assert.ok(game.world.encounters.getBoss(1));
     assert.ok(game.input.setControl('left', true));
     assert.equal(game.input.isDown('ArrowLeft'), true);
     assert.equal(game.input.isDown('KeyA'), true);
@@ -63,7 +62,7 @@ test('runtime starts a level, spawns enemies and creates the configured boss', (
     assert.equal(game.input.isDown('Space'), true);
   } finally {
     game.dispose();
-    clearEnemies();
+    game.world.encounters.clearEnemies();
   }
 });
 
@@ -72,7 +71,7 @@ test('boss defeat bridges the configured campaign boss ID into progression', () 
   try {
     game.progression.unlockAllLevels();
     game.startLevel(3);
-    assert.ok(damageBoss(1, 10000));
+    assert.ok(game.world.encounters.damageBoss(1, 10000));
     game.world.update(1.5, game.state, game.events, game.input);
     assert.ok(game.progression.defeatedBosses.includes('boss-w1'));
     assert.equal(game.state.status, 'victory');
@@ -86,7 +85,7 @@ test('player horizontal movement is blocked by live enemy colliders', () => {
   const game = createGameRuntime({ audioEnabled: false });
   try {
     game.startLevel(1);
-    const enemy = getEnemyState().enemies[0];
+    const enemy = game.world.encounters.getEnemiesForCollision()[0];
     assert.ok(enemy, 'level should spawn at least one enemy');
     enemy.x = game.player.x + game.player.width + 4;
     enemy.y = game.player.y;
@@ -101,7 +100,7 @@ test('player horizontal movement is blocked by live enemy colliders', () => {
 });
 
 
-test('enemy contact damage deducts a life through the runtime event bridge',()=>{const game=createGameRuntime({audioEnabled:false});try{game.startLevel(1);const enemy=getEnemyState().enemies[0];enemy.speed=0;enemy.vy=0;enemy.touchCooldown=0;game.player.setInvulnerable(0);enemy.x=game.player.x;enemy.y=game.player.y;enemy.patrolMin=enemy.x;enemy.patrolMax=enemy.x+enemy.w;const before=game.lives.getLives();game.world.update(1/60,game.state,game.events,game.input);assert.equal(game.lives.getLives(),before-1);assert.ok(game.player.invulnerabilityMs>0);}finally{game.dispose();clearEnemies();}});
+test('enemy contact damage deducts a life through the runtime event bridge',()=>{const game=createGameRuntime({audioEnabled:false});try{game.startLevel(1);const enemy=game.world.encounters.getEnemiesForCollision()[0];enemy.speed=0;enemy.vy=0;enemy.touchCooldown=0;game.player.setInvulnerable(0);enemy.x=game.player.x;enemy.y=game.player.y;enemy.patrolMin=enemy.x;enemy.patrolMax=enemy.x+enemy.w;const before=game.lives.getLives();game.world.update(1/60,game.state,game.events,game.input);assert.equal(game.lives.getLives(),before-1);assert.ok(game.player.invulnerabilityMs>0);}finally{game.dispose();clearEnemies();}});
 
 test('each campaign level contains one unique badge collectible',()=>{for(let n=1;n<=15;n++){const level=createLevel(n);const badges=level.collectibles.filter(i=>i.type==='badge');assert.equal(badges.length,1);assert.equal(badges[0].badgeId,n);assert.equal(badges[0].id,'badge-'+n);assert.ok(level.platforms.some(p=>badges[0].x>=p.x&&badges[0].x+30<=p.x+p.w));}});
 
@@ -113,7 +112,7 @@ test('combat events are normalized on shared bus and progression reacts once',()
  try{
   game.startLevel(1);const enemy=getEnemyState().enemies[0];enemy.speed=0;enemy.vy=0;enemy.touchCooldown=0;enemy.x=game.player.x;enemy.y=game.player.y;enemy.patrolMin=enemy.x;enemy.patrolMax=enemy.x+enemy.w;game.player.setInvulnerable(0);const lives=game.lives.getLives();game.world.update(1/60,game.state,game.events,game.input);
   assert.equal(seen.damage.length,1);assert.equal(game.lives.getLives(),lives-1);assert.equal(seen.damage[0].source,'contact');assert.equal(seen.damage[0].applied,true);
-  game.progression.unlockAllLevels();game.startLevel(3);const boss=getBoss(1);assert.ok(boss);damageBoss(1,boss.maxHealth);game.world.update(1.5,game.state,game.events,game.input);assert.equal(seen.boss.length,1);assert.equal(seen.boss[0].bossId,'boss-w1');assert.ok(game.progression.defeatedBosses.includes('boss-w1'));
+  game.progression.unlockAllLevels();game.startLevel(3);const boss=getBoss(1);assert.ok(boss);game.world.encounters.damageBoss(1,boss.maxHealth);game.world.update(1.5,game.state,game.events,game.input);assert.equal(seen.boss.length,1);assert.equal(seen.boss[0].bossId,'boss-w1');assert.ok(game.progression.defeatedBosses.includes('boss-w1'));
  }finally{offs.forEach(off=>off());game.dispose();clearEnemies();}
 });
 
