@@ -510,8 +510,6 @@ function restoreEncounter(snapshot) {
 /** Read-only enemy list used by world collision resolution. */
 function getEnemiesForCollision() { return state.enemies; }
 
-function getEnemiesForCollision() { return state.enemies; }
-
 
     Object.assign(this, { configure, spawnEnemies, updateEnemies, damageEnemy, spawnBoss, damageBoss, updateBoss, isBossDefeated, getBoss, renderEnemies, clearEnemies, serializeEncounter, restoreEncounter, getEnemiesForCollision });
   }
