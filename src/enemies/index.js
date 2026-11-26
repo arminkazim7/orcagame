@@ -11,7 +11,7 @@ export class EncounterSystem {
   constructor(bus, options = {}) {
     if (!bus || typeof bus.on !== 'function' || typeof bus.emit !== 'function') throw new TypeError('EncounterSystem requires a shared EventBus');
     const nextId = () => state.nextId++;
-// Module state
+// Instance state (isolated per EncounterSystem)
 // ---------------------------------------------------------------------------
 const state = {
   events: bus,
