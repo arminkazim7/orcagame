@@ -1,9 +1,11 @@
 import { createLevel } from './levels.js';
 import { LevelRenderer } from './LevelRenderer.js';
 import { CombatResolver } from './CombatResolver.js';
+import { LevelRenderer } from './LevelRenderer.js';
+import { CombatResolver } from './CombatResolver.js';
 import {
   spawnEnemies, updateEnemies, renderEnemies, spawnBoss, updateBoss,
-  getBoss, clearEnemies, serializeEncounter, restoreEncounter, events as enemyEvents , getEnemiesForCollision
+  getBoss, clearEnemies, serializeEncounter, restoreEncounter, events as enemyEvents, getEnemiesForCollision
 } from '../enemies/index.js';
 
 const intersects = (a, b) =>
@@ -31,6 +33,8 @@ export class WorldSystem {
     this.bossEncounterStarted = false;
     this.elapsed = 0;
     this.hudElapsed = 0;
+    this.renderer = new LevelRenderer();
+    this.combat = new CombatResolver({ events, lives, state, player, ui, getLevel: () => this.level });
     this.renderer = new LevelRenderer();
     this.combat = new CombatResolver({ events, lives, state, player, ui, getLevel: () => this.level });
     this.playerCombatant = {
@@ -257,6 +261,7 @@ export class WorldSystem {
 
   dispose() {
     for (const unsubscribe of this.unsubscribers) unsubscribe?.();
+    this.combat.dispose();
     this.combat.dispose();
     clearEnemies();
   }
