@@ -54,6 +54,7 @@ export class WorldSystem {
     this.encounters.clearEnemies();
     this.level = level;
     this.completed = false;
+    this.bossEncounterStarted = false;
     this.elapsed = 0;
     this.cameraX = 0;
     this.cameraY = 0;
