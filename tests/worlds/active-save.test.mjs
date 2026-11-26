@@ -178,3 +178,25 @@ test('deep encounter validation rejects invalid entities before mutating runtime
     assert.equal(game.lives.getLives(), beforeLives);
   } finally { game.dispose(); }
 });
+
+
+test('encounter save DTOs are versioned and legacy version 1 snapshots migrate', async () => {
+  const source = createGameRuntime({ audioEnabled: false });
+  const target = createGameRuntime({ audioEnabled: false });
+  try {
+    source.startLevel(1);
+    const save = source.saves.createSave();
+    const encounter = save.gameplayState.world.encounter;
+    assert.equal(encounter.schemaVersion, 1);
+    assert.ok(encounter.enemies.length > 0);
+    assert.equal(Object.hasOwn(encounter.enemies[0], 'internalScratch'), false);
+
+    save.version = 1;
+    delete encounter.schemaVersion;
+    encounter.enemies[0].internalScratch = 'legacy-only';
+    const result = await target.saves.loadSave(JSON.stringify(save));
+    assert.equal(result.loaded, true, result.errors?.join('; '));
+    assert.equal(target.world.encounters.getEnemiesForCollision()[0].internalScratch, undefined);
+    assert.equal(result.version, 2);
+  } finally { source.dispose(); target.dispose(); }
+});
