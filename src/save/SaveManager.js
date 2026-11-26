@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 export const DEFAULT_SAVE_LIMITS = Object.freeze({ maxLives: 99, maxScore: 2_000_000_000, maxDeathCount: 2_000_000_000, maxLevels: 1000, maxGameplayBytes: 1_000_000 });
 const POWER_UP_IDS = new Set(['sea-berry', 'golden-krill', 'bubble-shell']);
 const isObject = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -8,10 +8,10 @@ const clone = value => JSON.parse(JSON.stringify(value));
 /** Portable, manually transferable JSON save service. Browser APIs are used only by download/picker methods. */
 export class SaveManager {
   constructor({ player = null, progression = null, lives = null, score = null, powerUps = null, checkpoints = null,
-    profile = {}, getGameplayState = null, setGameplayState = null, totalLevels = null, limits = {} } = {}) {
+    profile = {}, getGameplayState = null, setGameplayState = null, validateGameplayState = null, totalLevels = null, limits = {} } = {}) {
     this.player = player; this.progression = progression; this.lives = lives; this.score = score;
     this.powerUps = powerUps; this.checkpoints = checkpoints; this.profile = profile;
-    this.getGameplayState = getGameplayState; this.setGameplayState = setGameplayState;
+    this.getGameplayState = getGameplayState; this.setGameplayState = setGameplayState; this.validateGameplayState = validateGameplayState;
     this.totalLevels = totalLevels ?? progression?.totalLevels ?? 25;
     this.limits = { ...DEFAULT_SAVE_LIMITS, ...limits };
   }
@@ -117,6 +117,7 @@ export class SaveManager {
       else {
         if (world.collectibles.length > 100 || !world.collectibles.every(item =>
           isObject(item) && typeof item.id === 'string' && typeof item.collected === 'boolean')) fail('gameplayState.world.collectibles is invalid');
+        try { this.validateGameplayState?.(world); } catch (error) { fail(`gameplayState.world failed validation: ${error.message}`); }
         const encounter = world.encounter;
         if (!Array.isArray(encounter.enemies) || !Array.isArray(encounter.projectiles) ||
             !Array.isArray(encounter.particles) || !Array.isArray(encounter.bosses) ||
@@ -141,7 +142,20 @@ export class SaveManager {
     return { valid: errors.length === 0, errors };
   }
 
+  migrateSave(input) {
+    if (!isObject(input)) return input;
+    if (input.version === SAVE_VERSION) return clone(input);
+    if (input.version === 1) {
+      const migrated = clone(input);
+      migrated.version = SAVE_VERSION;
+      if (isObject(migrated.gameplayState)) delete migrated.gameplayState.paused;
+      return migrated;
+    }
+    return clone(input);
+  }
+
   applySave(input) {
+    input = this.migrateSave(input);
     const validation = this.validateSave(input);
     if (!validation.valid) return { applied: false, errors: validation.errors };
     // Validation is complete before any live state is touched.
@@ -152,7 +166,7 @@ export class SaveManager {
       this.lives?.deserialize?.({ lives: input.lives, deathCount: input.deathCount, levelStart: clone(input.levelStart) });
       this.score?.deserialize?.({ score: input.score, nextThreshold: input.nextBonusLifeThreshold, awardedThresholds: input.awardedBonusLifeThresholds, threshold: 10000 });
       this.checkpoints?.deserialize?.(input.checkpoint);
-      this.powerUps?.deserialize?.({ active: input.activePowerUp, protectionHits: input.powerUpProtectionHits });
+      (this.powerUps?.restore ?? this.powerUps?.deserialize)?.call(this.powerUps, { active: input.activePowerUp, protectionHits: input.powerUpProtectionHits });
       if (input.gameplayState.player && this.player) restorePlayer(this.player, input.gameplayState.player);
       if (this.profile) { this.profile.name = input.player.name; this.profile.colour = input.player.colour; this.profile.characterType = input.player.characterType ?? 'orca'; this.profile.badges = [...(input.player.badges ?? [])]; this.profile.cheatUnlocked = input.cheatUnlocked; }
       this.setGameplayState?.(clone(input.gameplayState));
@@ -212,7 +226,7 @@ export class SaveManager {
     return { progression: this.progression?.serialize?.(), lives: this.lives?.serialize?.(), score: this.score?.serialize?.(), powerUps: this.powerUps?.serialize?.(), checkpoints: this.checkpoints?.serialize?.(), profile: this.profile ? clone(this.profile) : null, player: capturePlayer(this.player), gameplayState: this.getGameplayState?.() ?? null };
   }
   #restoreRollback(s) {
-    try { if (s.progression) this.progression?.deserialize?.(s.progression); if (s.lives) this.lives?.deserialize?.(s.lives); if (s.score) this.score?.deserialize?.(s.score); if (s.checkpoints !== undefined) this.checkpoints?.deserialize?.(s.checkpoints); if (s.powerUps) this.powerUps?.deserialize?.(s.powerUps); if (s.profile && this.profile) Object.assign(this.profile, s.profile); if (s.player && this.player) restorePlayer(this.player, s.player); if (s.gameplayState !== null) this.setGameplayState?.(s.gameplayState); } catch { /* rollback is best-effort; validation prevents ordinary invalid-state failures */ }
+    try { if (s.progression) this.progression?.deserialize?.(s.progression); if (s.lives) this.lives?.deserialize?.(s.lives); if (s.score) this.score?.deserialize?.(s.score); if (s.checkpoints !== undefined) this.checkpoints?.deserialize?.(s.checkpoints); if (s.powerUps) (this.powerUps?.restore ?? this.powerUps?.deserialize)?.call(this.powerUps, s.powerUps); if (s.profile && this.profile) Object.assign(this.profile, s.profile); if (s.player && this.player) restorePlayer(this.player, s.player); if (s.gameplayState !== null) this.setGameplayState?.(s.gameplayState); } catch { /* rollback is best-effort; validation prevents ordinary invalid-state failures */ }
   }
 }
 function defaultProgression(totalLevels) { return { totalLevels, currentLevel: 1, difficulty: 'easy', unlockedLevels: [1], completedLevels: {}, records: { easy: {}, hard: {} }, goldLevels: [], unlockedBosses: [], defeatedBosses: [], orcalordUnlocked: false }; }
