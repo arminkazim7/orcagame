@@ -19,6 +19,7 @@ test('portable save restores active level, player position, collectibles and bos
     const offBoss = game.events.on('boss.started', event => replayed.push(['boss.started', event]));
 
     game.startLevel(1);
+    replayed.length = 0;
     game.player.x = 100;
     const result = await game.saves.loadSave(JSON.stringify(save));
 
