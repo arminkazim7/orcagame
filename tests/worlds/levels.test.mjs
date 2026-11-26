@@ -79,6 +79,21 @@ test('level catalogue is deeply immutable and runtime levels have independent da
   assert.notEqual(first.collectibles[0].x, LEVELS[0].collectibles[0].x);
 });
 
+
+test('camera bounds use logical viewport size rather than canvas backing-store dimensions', () => {
+  const game = createGameRuntime({ canvas: { width: 4096, height: 2160 }, audioEnabled: false });
+  try {
+    const level = game.startLevel(1);
+    game.player.x = level.width - game.player.width;
+    game.player.y = level.start.y;
+    game.world.update(1 / 60, game.state, game.events, game.input);
+    assert.equal(game.world.cameraX, level.width - GAME_CONFIG.canvas.width);
+  } finally {
+    game.dispose();
+    game.world.encounters.clearEnemies();
+  }
+});
+
 test('level world height and camera viewport are independent of canvas backing-store size', () => {
   const level = createLevel(1);
   assert.equal(level.height, GAME_CONFIG.physics.worldHeight);
