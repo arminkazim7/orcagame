@@ -232,6 +232,11 @@ function restorePlayer(player, state) {
   for (const key of ['grounded']) if (state[key] !== undefined && typeof state[key] !== 'boolean') throw new TypeError(`Invalid player ${key}`);
   for (const key of ['facing', 'animationState']) if (state[key] !== undefined && typeof state[key] !== 'string') throw new TypeError(`Invalid player ${key}`);
   if (state.characterType !== undefined && !['orca','raccoon','octopus'].includes(state.characterType)) throw new TypeError('Invalid player characterType');
-  Object.assign(player, state);
+  // Never merge untrusted save objects into the live player. In particular,
+  // Object.assign would honor an own "__proto__" property from parsed JSON.
+  const allowedKeys = ['x', 'y', 'vx', 'vy', 'grounded', 'facing', 'rotation', 'animationState', 'characterType'];
+  for (const key of allowedKeys) {
+    if (Object.prototype.hasOwnProperty.call(state, key)) player[key] = state[key];
+  }
   if (state.characterType && player.animation) player.animation.characterType = state.characterType;
 }
