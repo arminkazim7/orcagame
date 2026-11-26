@@ -287,7 +287,7 @@ function updateBoss(dt, world) {
   }
 
   runBossPattern(boss, dt, {
-    fireProjectile: (x, y, vx, vy, opts) => state.projectiles.push(createProjectile(x, y, vx, vy, opts)),
+    fireProjectile: (x, y, vx, vy, opts) => state.projectiles.push(createProjectile(x, y, vx, vy, { ...opts, idFactory: nextId })),
     spawnMinion: (type, x, y) => {
       const e = createEnemy(type, x, y, { difficulty: boss.difficultyKey, platform: null, rng: state.rng, idFactory: nextId });
       e.patrolMin = arena.x; e.patrolMax = arena.x + arena.w - e.w;
