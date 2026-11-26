@@ -259,11 +259,6 @@ export class WorldSystem {
     this.player.physics.gravity = level.gravity;
     this.player.physics.resetTransientState?.();
     this.player.alive = true;
-    this.player.x = Math.max(0, Math.min(level.width - this.player.width, this.player.x));
-    this.player.y = Math.min(this.player.y, GAME_GROUND_Y - this.player.height);
-    this.player.vx = 0;
-    this.player.vy = 0;
-    this.player.grounded = false;
     this.player.invulnerabilityMs = 0;
     this.player.shootWasDown = false;
     this.player.projectiles?.clear?.();
