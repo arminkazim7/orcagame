@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const DEFAULT_SAVE_LIMITS = Object.freeze({ maxLives: 99, maxScore: 2_000_000_000, maxDeathCount: 2_000_000_000, maxLevels: 1000, maxGameplayBytes: 1_000_000 });
 const POWER_UP_IDS = new Set(['sea-berry', 'golden-krill', 'bubble-shell']);
 const isObject = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -11,18 +11,34 @@ const ENCOUNTER_FIELDS = {
   boss: ['id','world','arena','x','y','vx','vy','dir','w','h','health','maxHealth','attackTimer','dashState','teleportCooldown','minionsSpawned','phase','defeated','defeatTimer','hitFlash','difficultyKey','defeatEventSent','attackCount']
 };
 function migrateEncounter(snapshot) {
-  if (!isObject(snapshot) || snapshot.schemaVersion === 2) return;
+  if (!isObject(snapshot) || snapshot.schemaVersion === 3) return;
   const pick = (value, keys) => Object.fromEntries(keys.filter(key => value?.[key] !== undefined).map(key => [key, value[key]]));
+  const ids = ['coral-warden','ruin-colossus','abyss-emperor','kelp-guardian','ice-leviathan'];
+  const idFor = value => {
+    const match = typeof value === 'string' ? value.match(/^boss-w([1-5])$/) : null;
+    return match ? ids[Number(match[1]) - 1] : value;
+  };
   for (const [field, type] of [['enemies','enemy'],['projectiles','projectile'],['particles','particle'],['bosses','boss']]) {
     if (Array.isArray(snapshot[field])) snapshot[field] = snapshot[field].map(value => pick(value, ENCOUNTER_FIELDS[type]));
   }
-  if (Number.isInteger(snapshot.activeBossWorld)) {
-    snapshot.activeBossId = `boss-w${snapshot.activeBossWorld}`;
-    delete snapshot.activeBossWorld;
+  if (Array.isArray(snapshot.bosses)) {
+    for (const boss of snapshot.bosses) if (boss) boss.id = idFor(boss.id ?? (Number.isInteger(boss.world) ? `boss-w${boss.world}` : null));
   }
-  snapshot.schemaVersion = 2;
+  snapshot.activeBossId = idFor(snapshot.activeBossId ?? (Number.isInteger(snapshot.activeBossWorld) ? `boss-w${snapshot.activeBossWorld}` : null));
+  delete snapshot.activeBossWorld;
+  snapshot.schemaVersion = 3;
 }
-
+function migrateProgressionBossIds(progression) {
+  if (!isObject(progression)) return;
+  const ids = ['coral-warden','ruin-colossus','abyss-emperor','kelp-guardian','ice-leviathan'];
+  const idFor = value => {
+    const match = typeof value === 'string' ? value.match(/^boss-w([1-5])$/) : null;
+    return match ? ids[Number(match[1]) - 1] : value;
+  };
+  for (const field of ['unlockedBosses','defeatedBosses']) {
+    if (Array.isArray(progression[field])) progression[field] = [...new Set(progression[field].map(idFor))];
+  }
+}
 
 /** Portable, manually transferable JSON save service. Browser APIs are used only by download/picker methods. */
 export class SaveManager {
@@ -165,9 +181,10 @@ export class SaveManager {
   migrateSave(input) {
     if (!isObject(input)) return input;
     if (input.version === SAVE_VERSION) return clone(input);
-    if (input.version === 1) {
+    if (input.version === 1 || input.version === 2) {
       const migrated = clone(input);
       migrated.version = SAVE_VERSION;
+      migrateProgressionBossIds(migrated.progression);
       if (isObject(migrated.gameplayState)) {
         delete migrated.gameplayState.paused;
         if (isObject(migrated.gameplayState.world) && isObject(migrated.gameplayState.world.encounter)) migrateEncounter(migrated.gameplayState.world.encounter);
