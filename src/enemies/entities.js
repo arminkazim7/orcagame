@@ -1,6 +1,5 @@
 import { getDifficulty } from './difficulty.js';
 
-let nextId = 1;
 
 /** Shared combatant protection interface (duck-typed):
  *  players/power-ups implement: getBounds(), isInvulnerable(), onDamaged?(amount, source) */
