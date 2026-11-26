@@ -26,11 +26,11 @@ const TRACKS = Object.freeze({
 });
 
 const BOSS_TRACK_BY_ID = Object.freeze({
-  'boss-w1': 'boss-1',
-  'boss-w2': 'boss-2',
-  'boss-w3': 'boss-3',
-  'boss-w4': 'boss-4',
-  'boss-w5': 'boss-5'
+  'coral-warden': 'boss-1',
+  'ruin-colossus': 'boss-2',
+  'abyss-emperor': 'boss-3',
+  'kelp-guardian': 'boss-4',
+  'ice-leviathan': 'boss-5'
 });
 
 const SOUND_IDS = new Set([
