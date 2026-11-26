@@ -57,7 +57,7 @@ test('invalid active world snapshots are rejected before changing live state', (
   }
 });
 
-test('portable save preserves paused state and clamps restored camera', async () => {
+test('portable save discards paused state and clamps restored camera', async () => {
   const game = createGameRuntime({ audioEnabled: false });
   try {
     game.progression.unlockAllLevels();
@@ -201,4 +201,41 @@ test('encounter save DTOs are versioned and legacy version 1 snapshots migrate',
     assert.equal(target.world.encounters.getEnemiesForCollision()[0].internalScratch, undefined);
     assert.equal(result.version, 2);
   } finally { source.dispose(); target.dispose(); }
+});
+
+
+test('restarting after an enlarged power-up resets the manager and keeps the orca above the floor', () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    game.startLevel(1);
+    game.powerUps.collectPowerUp('golden-krill');
+    assert.ok(game.player.height > 43);
+    game.startLevel(1);
+    assert.equal(game.powerUps.getActivePowerUp(), null);
+    assert.equal(game.player.height, 43);
+    assert.ok(game.player.y + game.player.height <= game.config.physics.groundY);
+    for (let i = 0; i < 5; i++) game.world.update(1 / 60, game.state, game.events, {});
+    assert.ok(game.player.y + game.player.height <= game.config.physics.groundY);
+  } finally { game.dispose(); }
+});
+
+test('loading releases held controls while preserving the saved player motion', async () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    game.startLevel(1);
+    game.player.x = 900;
+    game.player.y = 220;
+    game.player.vx = 37;
+    game.player.vy = -12;
+    const save = game.saves.createSave();
+    game.input.setControl('left', true);
+    game.input.setControl('jump', true);
+    const result = await game.saves.loadSave(JSON.stringify(save));
+    assert.equal(result.loaded, true, result.errors?.join('; '));
+    assert.equal(game.input.isDown('left'), false);
+    assert.equal(game.input.isDown('jump'), false);
+    assert.equal(game.player.x, 900);
+    assert.equal(game.player.vx, 37);
+    assert.equal(game.player.vy, -12);
+  } finally { game.dispose(); }
 });
