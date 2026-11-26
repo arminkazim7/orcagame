@@ -83,3 +83,28 @@ test('portable save restores the selected character and its animation profile', 
     assert.equal(game.player.animation.characterType,'octopus');
   } finally { game.dispose(); clearEnemies(); }
 });
+
+
+test('Hard-mode damage amount removes the matching number of lives', () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    game.progression.difficulty = 'hard';
+    game.startLevel(1);
+    game.lives.lives = 4;
+    game.events.emit('player.damaged', { amount: 2, source: 'contact' });
+    assert.equal(game.lives.getLives(), 2);
+  } finally { game.dispose(); clearEnemies(); }
+});
+
+test('damage equal to remaining lives triggers one recovery', () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    game.progression.difficulty = 'hard';
+    game.startLevel(1);
+    game.lives.lives = 2;
+    const beforeDeaths = game.lives.deathCount;
+    game.events.emit('player.damaged', { amount: 2, source: 'enemy-projectile' });
+    assert.equal(game.lives.getLives(), game.lives.startingLives);
+    assert.equal(game.lives.deathCount, beforeDeaths + 1);
+  } finally { game.dispose(); clearEnemies(); }
+});
