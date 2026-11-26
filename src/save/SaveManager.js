@@ -16,7 +16,7 @@ function migrateEncounter(snapshot) {
   for (const [field, type] of [['enemies','enemy'],['projectiles','projectile'],['particles','particle'],['bosses','boss']]) {
     if (Array.isArray(snapshot[field])) snapshot[field] = snapshot[field].map(value => pick(value, ENCOUNTER_FIELDS[type]));
   }
-  if (snapshot.schemaVersion === 1 && Number.isInteger(snapshot.activeBossWorld)) {
+  if (Number.isInteger(snapshot.activeBossWorld)) {
     snapshot.activeBossId = `boss-w${snapshot.activeBossWorld}`;
     delete snapshot.activeBossWorld;
   }
