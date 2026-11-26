@@ -170,3 +170,15 @@ test('canonical boss IDs unlock and defeat tracking match spawned boss IDs', () 
   assert.deepEqual(p.unlockedBosses,bossIds);
   assert.deepEqual(p.defeatedBosses,bossIds);
 });
+
+
+test('loseLife applies a supplied damage amount and caps loss at remaining lives', () => {
+  const lives = new LifeManager({ lives: 4 });
+  assert.deepEqual(lives.loseLife({ amount: 2 }), { lost: true, recovered: false, amount: 2, lives: 2 });
+  const result = lives.loseLife({ amount: 5 });
+  assert.equal(result.lost, true);
+  assert.equal(result.amount, 2);
+  assert.equal(result.recovered, true);
+  assert.equal(result.lives, 3);
+  assert.equal(lives.deathCount, 1);
+});
