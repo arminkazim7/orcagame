@@ -9,6 +9,7 @@ export class LevelRenderer {
     }
     const level = world.level;
     const [top, bottom] = level.background;
+    const theme = level.theme ?? { terrain: '#143d48', trim: '#4eb7a1', accent: '#70d8c2', detail: '#d8f2e8' };
     const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
     gradient.addColorStop(0, top);
     gradient.addColorStop(1, bottom);
@@ -28,18 +29,71 @@ export class LevelRenderer {
     ctx.save();
     ctx.translate(-world.cameraX, -world.cameraY);
     for (const platform of level.platforms) {
-      ctx.fillStyle = platform.id === 'seafloor' ? '#143d48' : '#236f70';
+      ctx.fillStyle = theme.terrain;
       ctx.fillRect(platform.x, platform.y, platform.w, platform.h);
-      ctx.fillStyle = platform.id === 'seafloor' ? '#4eb7a1' : '#70d8c2';
-      ctx.fillRect(platform.x, platform.y, platform.w, platform.id === 'seafloor' ? 8 : 5);
+      ctx.fillStyle = theme.trim;
+      ctx.fillRect(platform.x, platform.y, platform.w, platform.id.includes('floor') || platform.id.includes('bank') || platform.id.includes('shore') ? 8 : 5);
+      if (platform.oneWay) {
+        ctx.fillStyle = theme.accent;
+        ctx.fillRect(platform.x + 5, platform.y + 6, Math.max(0, platform.w - 10), 3);
+      }
     }
-    ctx.fillStyle = '#e9d58a';
+    for (const decoration of level.decorations ?? []) this.#drawDecoration(ctx, decoration, theme);
+    for (const hazard of level.hazards ?? []) this.#drawHazard(ctx, hazard, theme);
+    ctx.fillStyle = theme.detail;
     ctx.fillRect(level.exit.x, level.exit.y, level.exit.w, level.exit.h);
     ctx.fillStyle = '#174f61';
     ctx.fillRect(level.exit.x + 10, level.exit.y + 10, level.exit.w - 20, level.exit.h - 10);
     for (const item of level.collectibles) this.#drawCollectible(ctx, item);
     world.player.render(ctx);
     world.encounters.renderEnemies(ctx, { x: world.cameraX, y: world.cameraY });
+    ctx.restore();
+  }
+
+  #drawDecoration(ctx, item, theme) {
+    const scale = item.scale ?? 1;
+    ctx.save();
+    ctx.translate(item.x, item.y);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = theme.accent;
+    ctx.strokeStyle = theme.detail;
+    ctx.lineWidth = 3;
+    if (['coral','kelp','flower','fan','root-tree'].includes(item.type)) {
+      for (let i = -1; i <= 1; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(i * 20, -22, i * 15, -62 - Math.abs(i) * 8);
+        ctx.stroke();
+      }
+      if (item.type === 'flower') { ctx.fillStyle = theme.detail; ctx.beginPath(); ctx.arc(0,-60,9,0,Math.PI*2); ctx.fill(); }
+    } else if (['crystal','iceberg','pillar','statue'].includes(item.type)) {
+      ctx.beginPath(); ctx.moveTo(-24,0); ctx.lineTo(-12,-48); ctx.lineTo(0,-68); ctx.lineTo(16,-38); ctx.lineTo(26,0); ctx.closePath(); ctx.fill(); ctx.stroke();
+    } else if (item.type === 'snowflake') {
+      for (let i=0;i<6;i++) { ctx.rotate(Math.PI/3); ctx.beginPath(); ctx.moveTo(0,-30); ctx.lineTo(0,30); ctx.stroke(); }
+    } else if (item.type === 'angler' || item.type === 'seal') {
+      ctx.beginPath(); ctx.ellipse(0,-12,26,14,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = theme.detail; ctx.beginPath(); ctx.arc(12,-17,3,0,Math.PI*2); ctx.fill();
+    } else {
+      ctx.beginPath(); ctx.ellipse(0,-12,18,12,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  #drawHazard(ctx, hazard, theme) {
+    ctx.save();
+    if (hazard.type === 'spikes') {
+      ctx.fillStyle = '#e85d75';
+      const count = Math.max(2, Math.floor(hazard.w / 18));
+      for (let i=0;i<count;i++) {
+        const x = hazard.x + i * hazard.w / count;
+        ctx.beginPath(); ctx.moveTo(x,hazard.y+hazard.h); ctx.lineTo(x+hazard.w/count/2,hazard.y); ctx.lineTo(x+hazard.w/count,hazard.y+hazard.h); ctx.closePath(); ctx.fill();
+      }
+    } else {
+      ctx.fillStyle = 'rgba(255,120,90,0.25)';
+      ctx.fillRect(hazard.x,hazard.y,hazard.w,hazard.h);
+      ctx.strokeStyle = '#ffb36b'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(hazard.x,hazard.y+hazard.h); ctx.quadraticCurveTo(hazard.x+hazard.w/2,hazard.y-12,hazard.x+hazard.w,hazard.y+hazard.h); ctx.stroke();
+    }
     ctx.restore();
   }
 
