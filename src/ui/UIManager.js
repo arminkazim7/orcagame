@@ -137,7 +137,27 @@ export class UIManager {
     }
     if(![...this._activePointers.values()].some(pointer=>pointer.button===active.button))active.button.classList.remove('pressed');
   }
-  mountMobileControls(){this.root.querySelector('.orca-mobile-controls')?.remove();this.root.insertAdjacentHTML('beforeend',this.showMobileControls());return this.root.querySelector('.orca-mobile-controls');}
+  mountMobileControls(){
+    this.root.querySelector('.orca-mobile-controls')?.remove();
+    const host=this.root.querySelector('.orca-ui')??this.root;
+    host.insertAdjacentHTML('beforeend',this.showMobileControls());
+    const nav=host.querySelector('.orca-mobile-controls');
+    // Bind directly to each control as well as the root delegation. This keeps
+    // controls responsive when an overlay or embedded host interferes with bubbling.
+    nav?.querySelectorAll('[data-control]').forEach(button=>{
+      button.addEventListener('pointerdown',this._pointerDown);
+      button.addEventListener('pointerup',this._pointerUp);
+      button.addEventListener('pointercancel',this._pointerUp);
+      button.addEventListener('lostpointercapture',this._pointerUp);
+      button.addEventListener('click',event=>{
+        if(event.detail===0) return;
+        const key=button.dataset.control;
+        this.onInput?.({type:'control',control:key,pressed:true});
+        queueMicrotask(()=>this.onInput?.({type:'control',control:key,pressed:false}));
+      });
+    });
+    return nav;
+  }
   dispose(){
     for(const active of this._activePointers.values())active.button.classList.remove('pressed');
     for(const key of Object.keys(this.input)){if(this.input[key])this.onInput?.({type:'control',control:key,pressed:false});this.input[key]=false;}
