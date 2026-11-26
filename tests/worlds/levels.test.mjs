@@ -1,33 +1,21 @@
-
-test('level two opening platform is within a comfortable jump from the starting floor', () => {
-  const level = createLevel(2);
-  const startFloor = level.platforms.find(platform => platform.id === 'lagoon-start');
-  const firstPlatform = level.platforms.find(platform => platform.id === 'bubble-step');
-  const maxJumpHeight = (570 * 570) / (2 * 1450);
-  assert.ok(firstPlatform.y < startFloor.y, 'opening platform should be elevated');
-  assert.ok(startFloor.y - firstPlatform.y <= maxJumpHeight - 25,
-    'opening platform should leave a safety margin below the orca jump apex');
-  assert.ok(firstPlatform.x < startFloor.x + startFloor.w,
-    'opening platform should be horizontally reachable from the starting floor');
-});
 import test from 'node:test';
-
-test('level two opening platform is within a comfortable jump from the starting floor', () => {
-  const level = createLevel(2);
-  const startFloor = level.platforms.find(platform => platform.id === 'lagoon-start');
-  const firstPlatform = level.platforms.find(platform => platform.id === 'bubble-step');
-  const maxJumpHeight = (570 * 570) / (2 * 1450);
-  assert.ok(firstPlatform.y < startFloor.y, 'opening platform should be elevated');
-  assert.ok(startFloor.y - firstPlatform.y <= maxJumpHeight - 25,
-    'opening platform should leave a safety margin below the orca jump apex');
-  assert.ok(firstPlatform.x < startFloor.x + startFloor.w,
-    'opening platform should be horizontally reachable from the starting floor');
-});
 import assert from 'node:assert/strict';
 import { createLevel, LEVELS } from '../../src/worlds/levels.js';
 import { GAME_CONFIG } from '../../src/game-config.js';
 import { createGameRuntime } from '../../src/main.js';
 import { BOSS_DEFS } from '../../src/enemies/bosses.js';
+
+test('level two opening platform is within a comfortable jump from the starting floor', () => {
+  const level = createLevel(2);
+  const startFloor = level.platforms.find(platform => platform.id === 'lagoon-start');
+  const firstPlatform = level.platforms.find(platform => platform.id === 'bubble-step');
+  const maxJumpHeight = (570 * 570) / (2 * 1450);
+  assert.ok(firstPlatform.y < startFloor.y, 'opening platform should be elevated');
+  assert.ok(startFloor.y - firstPlatform.y <= maxJumpHeight - 25,
+    'opening platform should leave a safety margin below the orca jump apex');
+  assert.ok(firstPlatform.x < startFloor.x + startFloor.w,
+    'opening platform should be horizontally reachable from the starting floor');
+});
 
 
 test('all authored platforms in all fifteen levels are reachable by a safe jump chain', () => {
