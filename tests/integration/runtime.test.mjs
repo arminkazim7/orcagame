@@ -99,3 +99,21 @@ test('gameplay keyboard controls remain active when a UI button keeps focus', ()
     if(previousWindow===undefined) delete globalThis.window; else globalThis.window=previousWindow;
   }
 });
+
+test('losing all lives shows the recovery screen, and resuming respawns a playable orca', () => {
+  const root = { innerHTML:'', replaceChildren(){this.innerHTML='';}, querySelector(){return null;}, addEventListener(){}, removeEventListener(){}, insertAdjacentHTML(_p,html){this.innerHTML+=html;} };
+  const game = createGameRuntime({ uiRoot:root, audioEnabled:false });
+  try {
+    game.startLevel(1);
+    for (let i = 0; i < 3; i++) { game.player.setInvulnerable(0); game.events.emit('player.damaged', { amount: 1, source: 'test' }); }
+    assert.equal(game.state.gameplay.paused, true, 'game pauses while the recovery screen is open');
+    assert.equal(game.ui.screen, 'back-to-the-current', 'recovery screen is shown (ui must be resolved after construction)');
+    assert.equal(game.lives.getLives(), 3, 'lives are restored');
+    assert.equal(game.player.grounded, true, 'orca is placed on the start floor');
+    game.state.gameplay.paused = false; // what the Resume Dive button does
+    const x0 = game.player.x;
+    game.input.setControl('right', true);
+    for (let i = 0; i < 90; i++) game.world.update(1 / 60, game.state, game.events, game.input);
+    assert.ok(game.player.x > x0 + 20, 'player can move after recovery');
+  } finally { game.dispose(); }
+});

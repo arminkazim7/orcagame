@@ -1,10 +1,11 @@
 /** Owns the policy for turning combat damage into life loss and recovery. */
 export class CombatResolver {
-  constructor({ events, lives, state, player, ui, getLevel }) {
+  constructor({ events, lives, state, player, getUi = () => null, getLevel }) {
     this.lives = lives;
     this.state = state;
     this.player = player;
-    this.ui = ui;
+    // Resolve the UI lazily: the composition root assigns it after the world is built.
+    this.getUi = getUi;
     this.getLevel = getLevel;
     this.unsubscribe = events.on('player.damaged', event => this.resolveDamage(event));
   }
@@ -15,7 +16,7 @@ export class CombatResolver {
     if (!result.recovered) return result;
     this.state.gameplay.paused = true;
     this.player.setInvulnerable(1500); // WorldSystem's recovery listener positions the player on solid ground.
-    this.ui?.showRecoveryScreen?.();
+    this.getUi()?.showRecoveryScreen?.();
     return result;
   }
 

@@ -33,7 +33,7 @@ export class WorldSystem {
     this.fallRecoveryMs = 0;
     this.encounters = new EncounterSystem(events);
     this.renderer = new LevelRenderer();
-    this.combat = new CombatResolver({ events, lives, state, player, ui, getLevel: () => this.level });
+    this.combat = new CombatResolver({ events, lives, state, player, getUi: () => this.ui, getLevel: () => this.level });
     this.playerCombatant = {
       getBounds: () => ({ x: player.x, y: player.y, w: player.width, h: player.height }),
       get x() { return player.x; },
