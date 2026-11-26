@@ -164,7 +164,7 @@ function updateEnemies(dt, world) {
   updateParticles(dt);
 }
 
-/** Defeat by stomp. Emits 'enemy:stomped' so the player controller can bounce. */
+/** Defeat by stomp. Emits 'enemy.stomped' so the player controller can bounce. */
 function stompEnemy(e, player) {
   e.hp = 0;
   defeatEnemy(e, { cause: 'stomp' });
@@ -238,7 +238,7 @@ function damageBoss(target, amount, meta = {}) {
     boss.defeated = true;
     boss.defeatTimer = DEFEAT_ANIMATION_DURATION;
     boss.vx = 0;
-    // 'boss:defeating' = animation starts; 'boss:defeated' fires when the animation finishes.
+    // 'boss.defeating' = animation starts; 'boss.defeated' fires when the animation finishes.
     state.events.emit('boss.defeating', { bossId: boss.id, world: boss.world });
     for (let i = 0; i < 24; i++) {
       state.particles.push(createParticle(boss.x + boss.w / 2, boss.y + boss.h / 2, boss.def.accent, state.rng));
