@@ -78,6 +78,8 @@ test('runtime starts a level, spawns enemies and creates the configured boss', (
     game.player.y = level.boss.arena.y - game.player.height;
     game.world.update(1 / 60, game.state, game.events, game.input);
     assert.ok(game.world.encounters.getBoss('coral-warden'));
+    assert.equal(game.world.encounters.getBoss(1), null, 'world numbers are not boss identifiers');
+    assert.equal(game.world.encounters.damageBoss(1, 10000), false, 'damage requires the canonical boss ID');
     assert.ok(game.input.setControl('left', true));
     assert.equal(game.input.isDown('ArrowLeft'), true);
     assert.equal(game.input.isDown('KeyA'), true);
