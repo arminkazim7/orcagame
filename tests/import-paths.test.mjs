@@ -9,7 +9,7 @@ const scanRoots = ['src', 'tests', 'demo'];
 function collect(dir) {
   return fs.readdirSync(path.join(root, dir), { withFileTypes: true }).flatMap(entry => {
     const relative = path.join(dir, entry.name);
-    return entry.isDirectory() ? collect(relative) : /\\.(?:js|mjs)$/.test(entry.name) ? [relative] : [];
+    return entry.isDirectory() ? collect(relative) : /\.(?:js|mjs)$/.test(entry.name) ? [relative] : [];
   });
 }
 function resolveImport(fromFile, specifier) {
@@ -20,7 +20,7 @@ test('all relative imports in source, tests and demo resolve', () => {
   const broken = [];
   for (const file of scanRoots.flatMap(collect)) {
     const source = fs.readFileSync(path.join(root, file), 'utf8');
-    const imports = [...source.matchAll(/(?:import|export)\\s+(?:[^'\"]*?\\s+from\\s+)?['\"]([^'\"]+)['\"]|import\\(['\"]([^'\"]+)['\"]\\)/g)];
+    const imports = [...source.matchAll(/(?:import|export)\s+(?:[^'\"]*?\s+from\s+)?['\"]([^'\"]+)['\"]|import\(['\"]([^'\"]+)['\"]\)/g)];
     for (const match of imports) {
       const specifier = match[1] ?? match[2];
       if (specifier.startsWith('.') && !resolveImport(file, specifier)) broken.push(file + ' -> ' + specifier);
