@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGameRuntime } from '../../src/main.js';
-import { damageBoss, getBoss, clearEnemies } from '../../src/enemies/index.js';
 
 test('portable save restores active level, player position, collectibles and boss encounter', async () => {
   const game = createGameRuntime({ audioEnabled: false });
@@ -12,8 +11,8 @@ test('portable save restores active level, player position, collectibles and bos
     game.player.x = 1777;
     game.player.y = 245;
     game.player.vx = 31;
-    damageBoss(1, 7);
-    const savedBossHealth = getBoss(1).health;
+    game.world.encounters.damageBoss(1, 7);
+    const savedBossHealth = game.world.encounters.getBoss(1).health;
     const save = game.saves.createSave();
 
     game.startLevel(1);
@@ -26,10 +25,10 @@ test('portable save restores active level, player position, collectibles and bos
     assert.equal(game.player.y, 245);
     assert.equal(game.player.vx, 31);
     assert.equal(game.world.level.collectibles[0].collected, true);
-    assert.equal(getBoss(1).health, savedBossHealth);
+    assert.equal(game.world.encounters.getBoss(1).health, savedBossHealth);
   } finally {
     game.dispose();
-    clearEnemies();
+   
   }
 });
 
@@ -46,7 +45,7 @@ test('invalid active world snapshots are rejected before changing live state', (
     assert.equal(game.world.level.number, before);
   } finally {
     game.dispose();
-    clearEnemies();
+   
   }
 });
 
@@ -65,7 +64,7 @@ test('portable save preserves paused state and clamps restored camera', async ()
     assert.ok(game.world.cameraX <= Math.max(0, game.world.level.width - 960));
   } finally {
     game.dispose();
-    clearEnemies();
+   
   }
 });
 
@@ -81,7 +80,7 @@ test('portable save restores the selected character and its animation profile', 
     assert.equal(result.loaded,true,result.errors?.join('; '));
     assert.equal(game.player.characterType,'octopus');
     assert.equal(game.player.animation.characterType,'octopus');
-  } finally { game.dispose(); clearEnemies(); }
+  } finally { game.dispose(); }
 });
 
 
@@ -93,7 +92,7 @@ test('Hard-mode damage amount removes the matching number of lives', () => {
     game.lives.lives = 4;
     game.events.emit('player.damaged', { amount: 2, source: 'contact' });
     assert.equal(game.lives.getLives(), 2);
-  } finally { game.dispose(); clearEnemies(); }
+  } finally { game.dispose(); }
 });
 
 test('damage equal to remaining lives triggers one recovery', () => {
@@ -106,7 +105,7 @@ test('damage equal to remaining lives triggers one recovery', () => {
     game.events.emit('player.damaged', { amount: 2, source: 'enemy-projectile' });
     assert.equal(game.lives.getLives(), game.lives.startingLives);
     assert.equal(game.lives.deathCount, beforeDeaths + 1);
-  } finally { game.dispose(); clearEnemies(); }
+  } finally { game.dispose(); }
 });
 
 
@@ -117,17 +116,17 @@ test('boss spawns and starts its theme only when the player enters the arena', (
   try {
     game.progression.unlockAllLevels();
     const level = game.startLevel(3);
-    assert.equal(getBoss(1), null);
+    assert.equal(game.world.encounters.getBoss(1), null);
     assert.equal(started.length, 0);
     game.player.x = level.boss.arena.x - game.player.width - 1;
     game.world.update(1 / 60, game.state, game.events, {});
-    assert.equal(getBoss(1), null);
+    assert.equal(game.world.encounters.getBoss(1), null);
     assert.equal(started.length, 0);
     game.player.x = level.boss.arena.x;
     game.world.update(1 / 60, game.state, game.events, {});
-    assert.ok(getBoss(1));
+    assert.ok(game.world.encounters.getBoss(1));
     assert.equal(started.length, 1);
-  } finally { off?.(); game.dispose(); clearEnemies(); }
+  } finally { off?.(); game.dispose(); }
 });
 
 test('boss-level save before arena entry restores without starting the encounter', async () => {
@@ -138,6 +137,6 @@ test('boss-level save before arena entry restores without starting the encounter
     const save = game.saves.createSave();
     const result = await game.saves.loadSave(JSON.stringify(save));
     assert.equal(result.loaded, true, result.errors?.join('; '));
-    assert.equal(getBoss(1), null);
-  } finally { game.dispose(); clearEnemies(); }
+    assert.equal(game.world.encounters.getBoss(1), null);
+  } finally { game.dispose(); }
 });
