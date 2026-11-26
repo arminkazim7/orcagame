@@ -44,13 +44,13 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
   }
   const saves = new SaveManager({ player, progression, lives, score, powerUps, checkpoints, profile: playerProfile,
     totalLevels: GAME_CONFIG.progression.totalLevels,
-    getGameplayState: () => ({ elapsedSeconds: state.gameplay.elapsedSeconds, cameraX: state.gameplay.cameraX, player: { x: player.x, y: player.y, vx: player.vx, vy: player.vy, grounded: player.grounded, facing: player.facing < 0 ? 'left' : 'right', animationState: player.animationState, characterType: player.characterType }, world: world?.serializeState?.() ?? null }),
+    getGameplayState: () => ({ elapsedSeconds: state.gameplay.elapsedSeconds, cameraX: state.gameplay.cameraX, paused: state.gameplay.paused, player: { x: player.x, y: player.y, vx: player.vx, vy: player.vy, grounded: player.grounded, facing: player.facing < 0 ? 'left' : 'right', animationState: player.animationState, characterType: player.characterType }, world: world?.serializeState?.() ?? null }),
     validateGameplayState: snapshot => world?.validateSnapshot?.(snapshot),
     setGameplayState: snapshot => {
-      if (snapshot.world) world.restore(snapshot.world);
+      world.restore(snapshot.world ?? null);
       state.gameplay.elapsedSeconds = snapshot.elapsedSeconds ?? 0;
       state.gameplay.cameraX = snapshot.cameraX ?? 0;
-      state.gameplay.paused = false;
+      state.gameplay.paused = snapshot.paused ?? false;
       if (snapshot.player) {
         for (const key of ['x','y','vx','vy','grounded','animationState','characterType']) if (snapshot.player[key] !== undefined) player[key] = snapshot.player[key];
         if (snapshot.player.facing) player.facing = snapshot.player.facing === 'left' ? -1 : 1;
