@@ -55,8 +55,8 @@ export class WorldSystem {
         this.#completeLevel(bossId);
       })
     ];
-    this.unsubscribers.push(this.events.on('player.damaged', () => {
-      const result = this.lives.loseLife({ reason: 'enemy-hit', levelStart: this.level?.start });
+    this.unsubscribers.push(this.events.on('player.damaged', event => {
+      const result = this.lives.loseLife({ amount: event?.amount, reason: 'enemy-hit', levelStart: this.level?.start });
       if (result.recovered) {
         this.state.gameplay.paused = true;
         this.player.setInvulnerable(1500);
