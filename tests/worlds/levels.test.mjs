@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createLevel, LEVELS } from '../../src/worlds/levels.js';
 import { createGameRuntime } from '../../src/main.js';
+import { BOSS_DEFS } from '../../src/enemies/bosses.js';
 
 test('campaign contains fifteen valid layouts across five worlds', () => {
   assert.equal(LEVELS.length, 15);
@@ -37,6 +38,26 @@ test('each third level has the matching world boss arena', () => {
   for (const number of [1,2,4,5,7,8,10,11,13,14]) {
     assert.equal(createLevel(number).boss, null);
   }
+});
+
+
+test('boss identity, display name and world association share one canonical ID', () => {
+  const expected = [
+    ['boss-w1', 'Coral Warden', 'coral-coast'],
+    ['boss-w2', 'Ruin Colossus', 'sunken-ruins'],
+    ['boss-w3', 'Abyss Emperor', 'deep-sea-trench'],
+    ['boss-w4', 'Kelp Guardian', 'kelp-forest'],
+    ['boss-w5', 'Ice Leviathan', 'arctic-ice-shelf']
+  ];
+  for (const [id, name, worldId] of expected) {
+    const definition = BOSS_DEFS[id];
+    const world = LEVELS.find(level => level.world.id === worldId).world;
+    assert.equal(definition.id, id);
+    assert.equal(definition.name, name);
+    assert.equal(world.bossId, id);
+    assert.equal(definition.world, world.levels[0] === 1 ? 1 : Math.ceil(world.levels[0] / 3));
+  }
+  assert.equal(Object.keys(BOSS_DEFS).length, 5);
 });
 
 test('invalid campaign level numbers are rejected', () => {
