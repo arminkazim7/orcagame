@@ -108,3 +108,36 @@ test('damage equal to remaining lives triggers one recovery', () => {
     assert.equal(game.lives.deathCount, beforeDeaths + 1);
   } finally { game.dispose(); clearEnemies(); }
 });
+
+
+test('boss spawns and starts its theme only when the player enters the arena', () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  const started = [];
+  const off = game.events.on('boss.started', event => started.push(event));
+  try {
+    game.progression.unlockAllLevels();
+    const level = game.startLevel(3);
+    assert.equal(getBoss(1), null);
+    assert.equal(started.length, 0);
+    game.player.x = level.boss.arena.x - game.player.width - 1;
+    game.world.update(1 / 60, game.state, game.events, {});
+    assert.equal(getBoss(1), null);
+    assert.equal(started.length, 0);
+    game.player.x = level.boss.arena.x;
+    game.world.update(1 / 60, game.state, game.events, {});
+    assert.ok(getBoss(1));
+    assert.equal(started.length, 1);
+  } finally { off?.(); game.dispose(); clearEnemies(); }
+});
+
+test('boss-level save before arena entry restores without starting the encounter', async () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    game.progression.unlockAllLevels();
+    game.startLevel(3);
+    const save = game.saves.createSave();
+    const result = await game.saves.loadSave(JSON.stringify(save));
+    assert.equal(result.loaded, true, result.errors?.join('; '));
+    assert.equal(getBoss(1), null);
+  } finally { game.dispose(); clearEnemies(); }
+});
