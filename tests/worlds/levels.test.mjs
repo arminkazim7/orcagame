@@ -43,11 +43,11 @@ test('each third level has the matching world boss arena', () => {
 
 test('boss identity, display name and world association share one canonical ID', () => {
   const expected = [
-    ['boss-w1', 'Coral Warden', 'coral-coast'],
-    ['boss-w2', 'Ruin Colossus', 'sunken-ruins'],
-    ['boss-w3', 'Abyss Emperor', 'deep-sea-trench'],
-    ['boss-w4', 'Kelp Guardian', 'kelp-forest'],
-    ['boss-w5', 'Ice Leviathan', 'arctic-ice-shelf']
+    ['coral-warden', 'Coral Warden', 'coral-coast'],
+    ['ruin-colossus', 'Ruin Colossus', 'sunken-ruins'],
+    ['abyss-emperor', 'Abyss Emperor', 'deep-sea-trench'],
+    ['kelp-guardian', 'Kelp Guardian', 'kelp-forest'],
+    ['ice-leviathan', 'Ice Leviathan', 'arctic-ice-shelf']
   ];
   for (const [id, name, worldId] of expected) {
     const definition = BOSS_DEFS[id];
@@ -77,7 +77,7 @@ test('runtime starts a level, spawns enemies and creates the configured boss', (
     game.player.x = level.boss.arena.x;
     game.player.y = level.boss.arena.y - game.player.height;
     game.world.update(1 / 60, game.state, game.events, game.input);
-    assert.ok(game.world.encounters.getBoss('boss-w1'));
+    assert.ok(game.world.encounters.getBoss('coral-warden'));
     assert.ok(game.input.setControl('left', true));
     assert.equal(game.input.isDown('ArrowLeft'), true);
     assert.equal(game.input.isDown('KeyA'), true);
@@ -98,9 +98,9 @@ test('boss defeat bridges the configured campaign boss ID into progression', () 
     game.player.x = level.boss.arena.x;
     game.player.y = level.boss.arena.y - game.player.height;
     game.world.update(1 / 60, game.state, game.events, game.input);
-    assert.ok(game.world.encounters.damageBoss('boss-w1', 10000));
+    assert.ok(game.world.encounters.damageBoss('coral-warden', 10000));
     game.world.update(1.5, game.state, game.events, game.input);
-    assert.ok(game.progression.defeatedBosses.includes('boss-w1'));
+    assert.ok(game.progression.defeatedBosses.includes('coral-warden'));
     assert.equal(game.state.status, 'victory');
   } finally {
     game.dispose();
@@ -139,7 +139,7 @@ test('combat events are normalized on shared bus and progression reacts once',()
  try{
   game.startLevel(1);const enemy=game.world.encounters.getEnemiesForCollision()[0];enemy.speed=0;enemy.vy=0;enemy.touchCooldown=0;enemy.x=game.player.x;enemy.y=game.player.y;enemy.patrolMin=enemy.x;enemy.patrolMax=enemy.x+enemy.w;game.player.setInvulnerable(0);const lives=game.lives.getLives();game.world.update(1/60,game.state,game.events,game.input);
   assert.equal(seen.damage.length,1);assert.equal(game.lives.getLives(),lives-1);assert.equal(seen.damage[0].source,'contact');assert.equal(seen.damage[0].applied,true);
-  game.progression.unlockAllLevels();const level=game.startLevel(3);game.player.x=level.boss.arena.x;game.player.y=level.boss.arena.y-game.player.height;game.world.update(1/60,game.state,game.events,game.input);const boss=game.world.encounters.getBoss('boss-w1');assert.ok(boss);game.world.encounters.damageBoss('boss-w1',boss.maxHealth);game.world.update(1.5,game.state,game.events,game.input);assert.equal(seen.boss.length,1);assert.equal(seen.boss[0].bossId,'boss-w1');assert.ok(game.progression.defeatedBosses.includes('boss-w1'));
+  game.progression.unlockAllLevels();const level=game.startLevel(3);game.player.x=level.boss.arena.x;game.player.y=level.boss.arena.y-game.player.height;game.world.update(1/60,game.state,game.events,game.input);const boss=game.world.encounters.getBoss('coral-warden');assert.ok(boss);game.world.encounters.damageBoss('coral-warden',boss.maxHealth);game.world.update(1.5,game.state,game.events,game.input);assert.equal(seen.boss.length,1);assert.equal(seen.boss[0].bossId,'coral-warden');assert.ok(game.progression.defeatedBosses.includes('coral-warden'));
  }finally{offs.forEach(off=>off());game.dispose();game.world.encounters.clearEnemies();}
 });
 
