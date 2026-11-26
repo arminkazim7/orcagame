@@ -214,6 +214,7 @@ export class WorldSystem {
     this.encounters.validateEncounterSnapshot(snapshot.encounter);
     const bosses = snapshot.encounter.bosses;
     if (bosses.length > 1 || bosses.some(boss => !expected.boss || boss.world !== expected.boss.world) ||
+        (bosses.length > 0 && snapshot.encounter.activeBossWorld !== bosses[0].world) ||
         (snapshot.encounter.activeBossWorld != null && snapshot.encounter.activeBossWorld !== expected.boss?.world)) {
       throw new TypeError('Saved boss encounter does not match the active level');
     }
