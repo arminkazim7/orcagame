@@ -47,6 +47,7 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
     getGameplayState: () => ({ elapsedSeconds: state.gameplay.elapsedSeconds, cameraX: state.gameplay.cameraX, paused: state.gameplay.paused, player: { x: player.x, y: player.y, vx: player.vx, vy: player.vy, grounded: player.grounded, facing: player.facing < 0 ? 'left' : 'right', animationState: player.animationState, characterType: player.characterType }, world: world?.serializeState?.() ?? null }),
     validateGameplayState: snapshot => world?.validateSnapshot?.(snapshot),
     setGameplayState: snapshot => {
+      input.releaseAll();
       world.restore(snapshot.world ?? null);
       state.gameplay.elapsedSeconds = snapshot.elapsedSeconds ?? 0;
       state.gameplay.cameraX = snapshot.cameraX ?? 0;
@@ -55,6 +56,12 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
         for (const key of ['x','y','vx','vy','grounded','animationState','characterType']) if (snapshot.player[key] !== undefined) player[key] = snapshot.player[key];
         if (snapshot.player.facing) player.facing = snapshot.player.facing === 'left' ? -1 : 1;
         if (snapshot.player.characterType && player.animation) player.animation.characterType = snapshot.player.characterType;
+      }
+      if (world.level) {
+        player.x = Math.max(0, Math.min(world.level.width - player.width, player.x));
+        player.y = Math.min(player.y, GAME_CONFIG.physics.groundY - player.height);
+        player.physics.resetTransientState?.();
+        player.shootWasDown = false;
       }
     }
   });
