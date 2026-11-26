@@ -458,7 +458,7 @@ function serializeEncounter() {
   };
   const pick = (value, keys) => Object.fromEntries(keys.filter(key => value[key] !== undefined).map(key => [key, value[key]]));
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     enemies: state.enemies.map(value => pick(value, fields.enemy)),
     projectiles: state.projectiles.map(value => pick(value, fields.projectile)),
     particles: state.particles.map(value => pick(value, fields.particle)),
@@ -469,7 +469,7 @@ function serializeEncounter() {
 
 /** Restore a previously validated encounter snapshot after the target level is spawned. */
 function validateEncounterSnapshot(snapshot) {
-  if (!snapshot || snapshot.schemaVersion !== 2 || !Array.isArray(snapshot.enemies) ||
+  if (!snapshot || snapshot.schemaVersion !== 3 || !Array.isArray(snapshot.enemies) ||
       !Array.isArray(snapshot.projectiles) || !Array.isArray(snapshot.particles) ||
       !Array.isArray(snapshot.bosses)) throw new TypeError('Invalid encounter snapshot');
   if (snapshot.enemies.length > 250 || snapshot.projectiles.length > 500 ||
