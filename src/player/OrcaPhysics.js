@@ -11,8 +11,11 @@ const pw = p => p.width ?? p.w ?? 0;
 const ph = p => p.height ?? p.h ?? 0;
 const isOneWay = p => p.oneWay === true || p.isOneWay === true || p.type === 'oneWay';
 
-export function inputDown(input, keys) {
+export function inputDown(input, keys, action = null) {
   if (!input) return false;
+  // Query named actions first so keyboard and touch share the same controls.
+  if (action && typeof input.isDown === 'function' && input.isDown(action)) return true;
+  if (action && input[action] === true) return true;
   for (const key of keys) {
     if (typeof input.isDown === 'function' && input.isDown(key)) return true;
     if (typeof input.isKeyDown === 'function' && input.isKeyDown(key)) return true;
@@ -31,17 +34,21 @@ export class OrcaPhysics {
     this.airControl = options.airControl ?? 0.82;
     this.dropThroughMs = 180;
     this.jumpWasDown = false;
+    this.dropWasDown = false;
     this.dropTimer = 0;
   }
 
   update(orca, deltaTime, input, platforms = [], hooks = {}) {
     const dt = Math.min(Math.max(deltaTime, 0), 1 / 30);
-    const left = inputDown(input, PLAYER_CONTROLS.left);
-    const right = inputDown(input, PLAYER_CONTROLS.right);
-    const down = inputDown(input, PLAYER_CONTROLS.down);
-    const jump = inputDown(input, PLAYER_CONTROLS.jump);
+    const left = inputDown(input, PLAYER_CONTROLS.left, 'left');
+    const right = inputDown(input, PLAYER_CONTROLS.right, 'right');
+    const down = inputDown(input, PLAYER_CONTROLS.down, 'down');
+    const jump = inputDown(input, PLAYER_CONTROLS.jump, 'jump');
+    const drop = inputDown(input, ['dropThrough'], 'dropThrough');
     const jumpPressed = jump && !this.jumpWasDown;
+    const dropPressed = drop && !this.dropWasDown;
     this.jumpWasDown = jump;
+    this.dropWasDown = drop;
 
     const direction = (right ? 1 : 0) - (left ? 1 : 0);
     if (direction) orca.facing = direction;
@@ -51,7 +58,7 @@ export class OrcaPhysics {
     orca.vx += Math.max(-step, Math.min(step, targetVx - orca.vx));
     if (!direction && orca.grounded) orca.vx *= Math.max(0, 1 - 12 * dt);
 
-    if (jumpPressed && down && this.#standingOnOneWay(orca, platforms)) {
+    if ((dropPressed || (jumpPressed && down)) && this.#standingOnOneWay(orca, platforms)) {
       this.dropTimer = this.dropThroughMs;
       orca.y += 3;
       orca.grounded = false;
