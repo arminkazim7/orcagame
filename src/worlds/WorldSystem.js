@@ -106,7 +106,8 @@ export class WorldSystem {
     this.cameraX = Math.max(0, Math.min(level.width - GAME_CONFIG.canvas.width,
       this.player.x - GAME_CONFIG.canvas.width * 0.36));
     state.gameplay.cameraX = this.cameraX;
-    this.cameraY = Math.max(0, Math.min(level.height - GAME_CONFIG.canvas.height, this.player.y - GAME_CONFIG.canvas.height * 0.38));
+    // Campaign levels are side-scrolling and have no vertical traversal; keep the ground near the viewport bottom.
+    this.cameraY = 0;
 
     // The boss encounter begins only when the player reaches the arena boundary.
     // Until then the boss does not exist and cannot patrol or attack from off-screen.
