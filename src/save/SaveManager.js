@@ -26,6 +26,7 @@ export class SaveManager {
     const profile = { name: this.profile?.name ?? 'Player', colour: this.profile?.colour ?? '#168AAD', characterType: this.profile?.characterType ?? this.player?.characterType ?? 'orca', badges: [...(this.profile?.badges ?? [])], ...(overrides.profile ?? {}) };
     const customGameplay = overrides.gameplayState ?? this.getGameplayState?.() ?? {};
     const gameplayState = { ...clone(customGameplay), player: customGameplay?.player ?? capturePlayer(this.player) };
+    delete gameplayState.paused; // Pause is transient runtime state, never portable save data.
     const save = {
       version: SAVE_VERSION, savedAt: new Date().toISOString(),
       player: { name: profile.name, colour: profile.colour, characterType: profile.characterType, badges: [...profile.badges] },
