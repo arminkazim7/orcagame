@@ -69,14 +69,20 @@ export class PowerUpManager {
     return { ...DEFINITIONS[this.active], protectionHits: this.protectionHits };
   }
   serialize() { return { active: this.active, protectionHits: this.protectionHits }; }
-  deserialize(data = {}) {
+  restore(data = {}) {
     const id = this.#id(data.active ?? data.id);
-    if (!id) { this.active = null; this.protectionHits = 0; this.player?.clearPowerUp?.(); return null; }
     this.active = id;
-    this.protectionHits = Math.max(0, Math.min(1, Number(data.protectionHits ?? 1) || 0));
+    this.protectionHits = id ? Math.max(0, Math.min(1, Number(data.protectionHits ?? 1) || 0)) : 0;
     if (this.protectionHits === 0) this.active = null;
-    this.applyPowerUp();
+    const effect = this.active ? DEFINITIONS[this.active] : null;
+    if (this.player) {
+      this.player.activePowerUp = effect?.name ?? null;
+      this.player.protectionHits = this.protectionHits;
+      this.player.sizeScale = effect?.size ?? 1;
+      this.player.jumpScale = effect?.jump ?? 1;
+    }
     return this.getActivePowerUp();
   }
+  deserialize(data = {}) { return this.restore(data); }
 }
 export { DEFINITIONS as POWER_UPS };
