@@ -14,9 +14,7 @@ export class CombatResolver {
     const result = this.lives.loseLife({ amount: event.amount, reason: 'enemy-hit', levelStart: level?.start });
     if (!result.recovered) return result;
     this.state.gameplay.paused = true;
-    this.player.setInvulnerable(1500);
-    this.player.x = result.respawn.x;
-    this.player.y = result.respawn.y;
+    this.player.setInvulnerable(1500); // WorldSystem's recovery listener positions the player on solid ground.
     this.ui?.showRecoveryScreen?.();
     return result;
   }
