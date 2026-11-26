@@ -53,15 +53,15 @@ export class Orca {
     if (completed) this.#emit('player.victoryAnimationComplete', { name: completed, playerName: this.name });
   }
 
-  render(ctx, cameraX = 0) {
+  render(ctx) {
     if (!this.alive) return;
     const pose = this.animation.getMotionPose(this.animationState, this.facing);
-    const x = this.x - cameraX + (pose.dx ?? 0), y = this.y + (pose.dy ?? 0);
+    const x = this.x + (pose.dx ?? 0), y = this.y + (pose.dy ?? 0);
     const blink = this.invulnerabilityMs > 0 && Math.floor(this.invulnerabilityMs / 75) % 2 === 0;
     if (blink) return;
     this.animation.renderEffects(ctx, x, y, this.width, pose);
-    if (this.characterType === 'raccoon') { this.#renderRaccoon(ctx, x, y, pose); this.projectiles.render(ctx, cameraX); this.#renderName(ctx,cameraX); return; }
-    if (this.characterType === 'octopus') { this.#renderOctopus(ctx, x, y, pose); this.projectiles.render(ctx, cameraX); this.#renderName(ctx,cameraX); return; }
+    if (this.characterType === 'raccoon') { this.#renderRaccoon(ctx, x, y, pose); this.projectiles.render(ctx); this.#renderName(ctx); return; }
+    if (this.characterType === 'octopus') { this.#renderOctopus(ctx, x, y, pose); this.projectiles.render(ctx); this.#renderName(ctx); return; }
     ctx.save();
     ctx.translate(x + this.width / 2, y + this.height / 2);
     ctx.scale(this.facing, 1);
@@ -109,10 +109,10 @@ export class Orca {
     ctx.restore();
     this.projectiles.render(ctx, cameraX);
     ctx.save(); ctx.fillStyle = 'rgba(235,249,255,.9)'; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(this.name, this.centerX - cameraX, this.y - 8); ctx.restore();
+    ctx.fillText(this.name, this.centerX, this.y - 8); ctx.restore();
   }
 
-  #renderName(ctx, cameraX) { ctx.save(); ctx.fillStyle = 'rgba(235,249,255,.9)'; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(this.name, this.centerX-cameraX, this.y-8); ctx.restore(); }
+  #renderName(ctx) { ctx.save(); ctx.fillStyle = 'rgba(235,249,255,.9)'; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(this.name, this.centerX, this.y-8); ctx.restore(); }
 
   #renderRaccoon(ctx, x, y, pose) {
     const w=this.width,h=this.height,t=pose.tail??0, phase=this.animation.time;
