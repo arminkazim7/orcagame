@@ -2,7 +2,7 @@
 **Owns:** `src/worlds/`
 
 Build exactly 15 regular levels, three per world:
-1–3 Coral Coast; 4–6 Sunken Ruins; 7–9 Deep Sea Trench; 10–12 Kelp Forest; 13–15 Arctic Ice Shelf.
+1–3 Coral Coast (boss ID `boss-w1`, Ember Colossus); 4–6 Sunken Ruins (boss ID `boss-w2`, Frost Sentinel); 7–9 Deep Sea Trench (boss ID `boss-w3`, Storm Serpent); 10–12 Kelp Forest (boss ID `boss-w4`, Gloom Warden); 13–15 Arctic Ice Shelf (boss ID `boss-w5`, Void Sovereign).
 
 World identities must be unmistakable, not just different background colours:
 - Coral Coast: tropical coral, sandy seabed, colourful plants.
