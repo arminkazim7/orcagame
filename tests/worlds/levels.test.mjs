@@ -53,6 +53,9 @@ test('runtime starts a level, spawns enemies and creates the configured boss', (
     assert.equal(game.state.status, 'playing');
     assert.equal(game.player.x, level.start.x);
     assert.ok(game.world.level);
+    game.player.x = level.boss.arena.x;
+    game.player.y = level.boss.arena.y - game.player.height;
+    game.world.update(1 / 60, game.state, game.events, game.input);
     assert.ok(game.world.encounters.getBoss(1));
     assert.ok(game.input.setControl('left', true));
     assert.equal(game.input.isDown('ArrowLeft'), true);
@@ -70,7 +73,10 @@ test('boss defeat bridges the configured campaign boss ID into progression', () 
   const game = createGameRuntime({ audioEnabled: false });
   try {
     game.progression.unlockAllLevels();
-    game.startLevel(3);
+    const level = game.startLevel(3);
+    game.player.x = level.boss.arena.x;
+    game.player.y = level.boss.arena.y - game.player.height;
+    game.world.update(1 / 60, game.state, game.events, game.input);
     assert.ok(game.world.encounters.damageBoss(1, 10000));
     game.world.update(1.5, game.state, game.events, game.input);
     assert.ok(game.progression.defeatedBosses.includes('boss-w1'));
@@ -112,7 +118,7 @@ test('combat events are normalized on shared bus and progression reacts once',()
  try{
   game.startLevel(1);const enemy=getEnemyState().enemies[0];enemy.speed=0;enemy.vy=0;enemy.touchCooldown=0;enemy.x=game.player.x;enemy.y=game.player.y;enemy.patrolMin=enemy.x;enemy.patrolMax=enemy.x+enemy.w;game.player.setInvulnerable(0);const lives=game.lives.getLives();game.world.update(1/60,game.state,game.events,game.input);
   assert.equal(seen.damage.length,1);assert.equal(game.lives.getLives(),lives-1);assert.equal(seen.damage[0].source,'contact');assert.equal(seen.damage[0].applied,true);
-  game.progression.unlockAllLevels();game.startLevel(3);const boss=getBoss(1);assert.ok(boss);game.world.encounters.damageBoss(1,boss.maxHealth);game.world.update(1.5,game.state,game.events,game.input);assert.equal(seen.boss.length,1);assert.equal(seen.boss[0].bossId,'boss-w1');assert.ok(game.progression.defeatedBosses.includes('boss-w1'));
+  game.progression.unlockAllLevels();const level=game.startLevel(3);game.player.x=level.boss.arena.x;game.player.y=level.boss.arena.y-game.player.height;game.world.update(1/60,game.state,game.events,game.input);const boss=game.world.encounters.getBoss(1);assert.ok(boss);game.world.encounters.damageBoss(1,boss.maxHealth);game.world.update(1.5,game.state,game.events,game.input);assert.equal(seen.boss.length,1);assert.equal(seen.boss[0].bossId,'boss-w1');assert.ok(game.progression.defeatedBosses.includes('boss-w1'));
  }finally{offs.forEach(off=>off());game.dispose();clearEnemies();}
 });
 
