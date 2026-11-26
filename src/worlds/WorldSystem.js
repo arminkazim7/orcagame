@@ -63,6 +63,7 @@ export class WorldSystem {
     this.state.gameplay.cameraX = 0;
     this.checkpoints.clear();
     this.lives.levelStart = { ...level.start };
+    this.powerUps?.clearPowerUp?.('level-start');
     this.player.sizeScale = 1;
     this.player.jumpScale = 1;
     this.player.activePowerUp = null;
