@@ -58,11 +58,3 @@ export function createParticle(x, y, color, rng = Math.random) {
   const s = 40 + rng() * 120;
   return { x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 60, life: 0.5 + rng() * 0.4, maxLife: 0.9, size: 2 + rng() * 3, color };
 }
-
-
-
-/** Ensure newly spawned entities do not reuse IDs from a restored save. */
-export function ensureNextEntityId(value) {
-  if (Number.isSafeInteger(value) && value > nextId) nextId = value;
-  return nextId;
-}
