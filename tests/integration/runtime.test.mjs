@@ -64,3 +64,15 @@ test('world event listeners are removed when the runtime is disposed', () => {
   game.dispose();
   assert.equal(game.events.listenerCount('player.damaged'), 0);
 });
+
+test('composition root owns UI lifecycle when uiRoot is provided', () => {
+  const listeners = new Map();
+  const root = { innerHTML: '', replaceChildren(){ this.innerHTML=''; }, querySelector(){ return null; },
+    addEventListener(name, handler){ listeners.set(name,handler); }, removeEventListener(name){ listeners.delete(name); } };
+  const game = createGameRuntime({ uiRoot: root, audioEnabled: false });
+  assert.ok(game.ui, 'runtime exposes its UI manager');
+  assert.ok(root.innerHTML.includes('Orca Adventure'), 'runtime mounts main menu');
+  assert.ok(listeners.has('click') && listeners.has('pointerdown'), 'UI listeners are registered');
+  game.dispose();
+  assert.equal(listeners.size, 0, 'dispose removes UI listeners');
+});
