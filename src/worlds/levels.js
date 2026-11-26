@@ -11,10 +11,22 @@ export function createLevel(levelNumber) {
   const worldIndex = Math.floor((number - 1) / 3);
   const world = GAME_CONFIG.worlds[worldIndex];
   const platforms = authored.platforms.map(platform => ({ ...platform }));
-  const collectibles = authored.pickups.map(([x,y,type], index) => ({
-    id: `${type}-${number}-${index + 1}`, type: type === 'checkpoint' ? 'checkpoint' : type === 'life' ? 'life' : 'powerup',
-    ...(type !== 'checkpoint' && type !== 'life' ? { powerUp: type } : {}), x, y
-  }));
+  const collectibles = authored.pickups.map(([authoredX,authoredY,type], index) => {
+    let x = authoredX, y = authoredY;
+    if (type === 'checkpoint') {
+      const support = platforms.reduce((best, platform) => {
+        const supportedX = Math.max(platform.x + 8, Math.min(platform.x + platform.w - 38, authoredX));
+        const distance = Math.abs(supportedX - authoredX) + Math.abs(platform.y - authoredY) * 0.05;
+        return !best || distance < best.distance ? { platform, x: supportedX, distance } : best;
+      }, null);
+      x = support.x;
+      y = support.platform.y - 15;
+    }
+    return {
+      id: `${type}-${number}-${index + 1}`, type: type === 'checkpoint' ? 'checkpoint' : type === 'life' ? 'life' : 'powerup',
+      ...(type !== 'checkpoint' && type !== 'life' ? { powerUp: type } : {}), x, y
+    };
+  });
   const badgePlatform = platforms.filter(platform => platform.oneWay).at(Math.floor(platforms.filter(platform => platform.oneWay).length / 2));
   collectibles.push({ id: `badge-${number}`, type: 'badge', badgeId: number,
     x: badgePlatform.x + Math.floor(badgePlatform.w / 2) - 15, y: badgePlatform.y - 38 });
