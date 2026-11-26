@@ -307,6 +307,7 @@ export class WorldSystem {
     this.state.status = 'menu';
     this.state.gameplay.paused = true;
     this.level = null;
+    this.collectibleState.clear();
     this.encounters.clearEnemies();
   }
 
