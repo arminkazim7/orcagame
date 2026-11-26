@@ -10,11 +10,21 @@ test('campaign contains fifteen valid layouts across five worlds', () => {
     1,1,1,2,2,2,3,3,3,4,4,4,5,5,5
   ]);
   for (const level of LEVELS) {
-    assert.ok(level.platforms.length >= 9);
-    assert.ok(level.platforms.some(platform => platform.id === 'seafloor'));
+    assert.ok(level.platforms.length >= 15);
+    const floors = level.platforms.filter(platform => !platform.oneWay);
+    assert.ok(floors.length >= 4, 'authored terrain should contain separated floor sections');
+    assert.ok(floors.some((floor, i) => i > 0 && floor.x > floors[i - 1].x + floors[i - 1].w), 'floor gaps must be present');
+    assert.ok(level.hazards.length >= 2);
+    assert.ok(level.decorations.length >= 3);
+    assert.ok(level.enemySpawnPoints.length >= 4);
     assert.ok(level.exit.x > level.start.x);
     assert.equal(level.width, 4800);
+    assert.ok(level.theme?.style);
   }
+  assert.equal(new Set(LEVELS.map(level => JSON.stringify(level.platforms))).size, 15,
+    'all fifteen levels must have independently authored terrain');
+  assert.equal(new Set(LEVELS.map(level => level.theme.style)).size, 5,
+    'the five worlds must use five distinct rendering themes');
 });
 
 test('each third level has the matching world boss arena', () => {
@@ -105,4 +115,50 @@ test('combat events are normalized on shared bus and progression reacts once',()
   assert.equal(seen.damage.length,1);assert.equal(game.lives.getLives(),lives-1);assert.equal(seen.damage[0].source,'contact');assert.equal(seen.damage[0].applied,true);
   game.progression.unlockAllLevels();game.startLevel(3);const boss=getBoss(1);assert.ok(boss);damageBoss(1,boss.maxHealth);game.world.update(1.5,game.state,game.events,game.input);assert.equal(seen.boss.length,1);assert.equal(seen.boss[0].bossId,'boss-w1');assert.ok(game.progression.defeatedBosses.includes('boss-w1'));
  }finally{offs.forEach(off=>off());game.dispose();clearEnemies();}
+});
+
+
+test('runtime uses authored enemy spawn positions rather than cycling across platforms', () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    const level = game.startLevel(1);
+    const enemies = getEnemyState().enemies;
+    assert.equal(enemies.length, 4);
+    for (let i = 0; i < level.enemySpawnPoints.length; i++) {
+      assert.equal(enemies[i].x, level.enemySpawnPoints[i].x);
+      assert.equal(enemies[i].y, level.enemySpawnPoints[i].y);
+    }
+  } finally { game.dispose(); clearEnemies(); }
+});
+
+test('falling through an authored terrain gap costs a life and respawns safely', () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    const level = game.startLevel(1);
+    const before = game.lives.getLives();
+    game.player.setInvulnerable(0);
+    game.player.y = level.height + 100;
+    game.player.vy = 0;
+    game.world.update(1 / 60, game.state, game.events, game.input);
+    assert.equal(game.lives.getLives(), before - 1);
+    assert.equal(game.player.x, level.start.x);
+    assert.ok(game.player.y < level.height);
+    assert.ok(game.player.invulnerabilityMs > 0);
+  } finally { game.dispose(); clearEnemies(); }
+});
+
+test('authored hazards apply combat damage through the shared event bus', () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    const level = game.startLevel(1);
+    const hazard = level.hazards[0];
+    const before = game.lives.getLives();
+    game.player.setInvulnerable(0);
+    game.player.x = hazard.x;
+    game.player.y = hazard.y;
+    game.player.vx = 0;
+    game.player.vy = 0;
+    game.world.update(1 / 60, game.state, game.events, game.input);
+    assert.equal(game.lives.getLives(), before - 1);
+  } finally { game.dispose(); clearEnemies(); }
 });
