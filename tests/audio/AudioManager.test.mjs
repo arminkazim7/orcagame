@@ -66,12 +66,13 @@ test('each of the five boss tracks replaces the previous scheduler', async () =>
 test('campaign boss IDs select their matching distinct music tracks', async () => {
   const audio = makeAudio();
   await audio.unlockAudio();
-  const ids = ['coral-warden','kelp-guardian','ice-leviathan','ruin-colossus','abyss-emperor'];
+  const ids = ['boss-w1','boss-w2','boss-w3','boss-w4','boss-w5'];
   for (let i = 0; i < ids.length; i += 1) {
     audio.playBossMusic(ids[i]);
     assert.equal(audio.currentTrack, `boss-${i + 1}`, ids[i]);
   }
   assert.throws(() => audio.playBossMusic('unknown-boss'), /Unknown boss ID/);
+  assert.throws(() => audio.playBossMusic(1), /Unknown boss ID/);
   await audio.dispose();
 });
 
@@ -104,7 +105,7 @@ test('all required effect identifiers are recognized', async () => {
 test('pause stops scheduling and resume restores the selected track', async () => {
   const audio = makeAudio();
   await audio.unlockAudio();
-  audio.playBossMusic(4);
+  audio.playBossMusic('boss-w4');
   await audio.pauseAudio();
   assert.equal(audio.paused, true);
   assert.equal(audio.scheduler, null);
@@ -117,7 +118,7 @@ test('pause stops scheduling and resume restores the selected track', async () =
 
 test('stopping music clears active and pending playback', async () => {
   const audio = makeAudio();
-  audio.playBossMusic(2);
+  audio.playBossMusic('boss-w2');
   audio.stopMusic();
   assert.equal(audio.currentTrack, null);
   assert.equal(audio.pendingTrack, null);
@@ -129,7 +130,7 @@ test('stopping music clears active and pending playback', async () => {
 test('boss-5 F5 melody note is defined and bass lines stay in the bass register', async () => {
   const audio = makeAudio();
   await audio.unlockAudio();
-  audio.playBossMusic('abyss-emperor');
+  audio.playBossMusic('boss-w5');
   const frequencies = audio.context.nodes
     .filter(node => node.frequency.value > 0)
     .map(node => node.frequency.value);
