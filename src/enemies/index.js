@@ -18,8 +18,8 @@ const state = {
   enemies: [],
   projectiles: [],
   particles: [],
-  bosses: new Map(),        // world -> boss
-  activeBossWorld: null,
+  bosses: new Map(),        // boss ID -> boss
+  activeBossId: null,
   stompEnabled: true,       // "optional stomp defeat"
   rng: options.rng ?? Math.random,
   contactGrace: options.contactGrace ?? 0.6,
@@ -206,18 +206,18 @@ function emitPlayerDamage(world, amount, meta) {
  * Hard boss health is exactly twice Easy boss health (guaranteed).
  * @param {{world:number, difficulty:'easy'|'hard', arena:{x,y,w,h}}} opts
  */
-function spawnBoss({ world, difficulty = 'easy', arena }) {
-  if (!BOSS_DEFS[world]) throw new Error(`spawnBoss: no boss for world ${world} (valid: 1-5).`);
-  const boss = createBoss(world, difficulty, arena);
-  state.bosses.set(world, boss);
-  state.activeBossWorld = world;
+function spawnBoss({ bossId, difficulty = 'easy', arena }) {
+  if (!BOSS_DEFS[bossId]) throw new Error(`spawnBoss: unknown boss ID ${bossId}.`);
+  const boss = createBoss(bossId, difficulty, arena);
+  state.bosses.set(bossId, boss);
+  state.activeBossId = bossId;
   return boss;
 }
 
 function resolveBoss(target) {
-  if (typeof target === 'number') return state.bosses.get(target) || null;
-  if (target && typeof target === 'object' && target.def) return state.bosses.get(target.world) || target;
-  if (state.activeBossWorld != null) return state.bosses.get(state.activeBossWorld) || null;
+  if (typeof target === 'string') return state.bosses.get(target) || null;
+  if (target && typeof target === 'object' && target.def) return state.bosses.get(target.id) || target;
+  if (state.activeBossId != null) return state.bosses.get(state.activeBossId) || null;
   return null;
 }
 
@@ -250,7 +250,7 @@ function damageBoss(target, amount, meta = {}) {
  * @param {object} world { player, platforms, gravity?, bounds }
  */
 function updateBoss(dt, world) {
-  const boss = state.activeBossWorld != null ? state.bosses.get(state.activeBossWorld) : null;
+  const boss = state.activeBossId != null ? state.bosses.get(state.activeBossId) : null;
   if (!boss) return;
   boss.hitFlash = Math.max(0, boss.hitFlash - dt);
 
@@ -306,14 +306,14 @@ function updateBoss(dt, world) {
 }
 
 /** True once the boss for the given world (or the active boss) has 0 HP. */
-function isBossDefeated(world = state.activeBossWorld) {
-  const boss = state.bosses.get(world);
+function isBossDefeated(bossId = state.activeBossId) {
+  const boss = state.bosses.get(bossId);
   return !!boss && boss.health <= 0;
 }
 
 /** Get the boss object (for rendering the health bar or custom logic). */
-function getBoss(world = state.activeBossWorld) {
-  return state.bosses.get(world) || null;
+function getBoss(bossId = state.activeBossId) {
+  return state.bosses.get(bossId) || null;
 }
 
 // ---------------------------------------------------------------------------
@@ -428,7 +428,7 @@ function renderEnemies(g, camera = { x: 0, y: 0 }) {
     g.fillStyle = '#fff';
     g.font = 'bold 12px sans-serif';
     g.textAlign = 'center';
-    g.fillText(`${boss.def.name} — World ${boss.world}`, bx + (camera?.x ?? 0) + bw / 2, by + (camera?.y ?? 0) + 13);
+    g.fillText(`${boss.def.name}`, bx + (camera?.x ?? 0) + bw / 2, by + (camera?.y ?? 0) + 13);
   }
 }
 
@@ -442,7 +442,7 @@ function clearEnemies() {
   state.projectiles = [];
   state.particles = [];
   state.bosses.clear();
-  state.activeBossWorld = null;
+  state.activeBossId = null;
 }
 
 /**
@@ -463,7 +463,7 @@ function serializeEncounter() {
     projectiles: state.projectiles.map(value => pick(value, fields.projectile)),
     particles: state.particles.map(value => pick(value, fields.particle)),
     bosses: [...state.bosses.values()].map(value => pick(value, fields.boss)),
-    activeBossWorld: state.activeBossWorld
+    activeBossId: state.activeBossId
   };
 }
 
@@ -505,8 +505,7 @@ function validateEncounterSnapshot(snapshot) {
         typeof particle.color !== 'string') throw new TypeError('Encounter contains an invalid particle');
   }
   for (const boss of snapshot.bosses) {
-    if (!boss || !Number.isInteger(boss.world) || !BOSS_DEFS[boss.world] ||
-        boss.id !== `boss-w${boss.world}` || !boss.arena ||
+    if (!boss || typeof boss.id !== 'string' || !BOSS_DEFS[boss.id] || BOSS_DEFS[boss.id].world !== boss.world || !boss.arena ||
         !['x','y','w','h'].every(key => finite(boss.arena[key])) ||
         !['x','y','vx','vy','health','maxHealth','attackTimer','defeatTimer','dir','w','h','teleportCooldown','minionsSpawned','hitFlash'].every(key => finite(boss[key])) ||
         !['easy','hard'].includes(boss.difficultyKey) || ![1,2].includes(boss.phase) ||
@@ -517,8 +516,8 @@ function validateEncounterSnapshot(snapshot) {
       throw new TypeError('Encounter contains an invalid boss');
     }
   }
-  if (snapshot.activeBossWorld !== null && snapshot.activeBossWorld !== undefined &&
-      (!Number.isInteger(snapshot.activeBossWorld) || !snapshot.bosses.some(boss => boss.world === snapshot.activeBossWorld))) {
+  if (snapshot.activeBossId !== null && snapshot.activeBossId !== undefined &&
+      (typeof snapshot.activeBossId !== 'string' || !snapshot.bosses.some(boss => boss.id === snapshot.activeBossId))) {
     throw new TypeError('Encounter active boss reference is invalid');
   }
   return true;
@@ -530,10 +529,10 @@ function restoreEncounter(snapshot) {
   state.projectiles = JSON.parse(JSON.stringify(snapshot.projectiles));
   state.particles = JSON.parse(JSON.stringify(snapshot.particles));
   state.bosses = new Map(snapshot.bosses.map(snapshotBoss => [
-    snapshotBoss.world,
-    { ...JSON.parse(JSON.stringify(snapshotBoss)), def: BOSS_DEFS[snapshotBoss.world] }
+    snapshotBoss.id,
+    { ...JSON.parse(JSON.stringify(snapshotBoss)), def: BOSS_DEFS[snapshotBoss.id] }
   ]));
-  state.activeBossWorld = snapshot.activeBossWorld ?? null;
+  state.activeBossId = snapshot.activeBossId ?? null;
   const ids = [...state.enemies, ...state.projectiles].map(entity => entity.id).filter(Number.isInteger);
   state.nextId = Math.max(state.nextId, 1, ...ids.map(id => id + 1));
   return true;
