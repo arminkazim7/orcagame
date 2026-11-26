@@ -86,6 +86,7 @@ test('camera bounds use logical viewport size rather than canvas backing-store d
     game.player.y = level.start.y;
     game.world.update(1 / 60, game.state, game.events, game.input);
     assert.equal(game.world.cameraX, level.width - GAME_CONFIG.canvas.width);
+    assert.equal(game.world.cameraY, 0, 'side-scrolling levels should keep the ground near the viewport bottom');
   } finally {
     game.dispose();
     game.world.encounters.clearEnemies();
