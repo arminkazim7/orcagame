@@ -73,6 +73,7 @@ test('campaign boss IDs select their matching distinct music tracks', async () =
   }
   assert.throws(() => audio.playBossMusic('unknown-boss'), /Unknown boss ID/);
   assert.throws(() => audio.playBossMusic(1), /Unknown boss ID/);
+  assert.throws(() => audio.playBossMusic(1), /Unknown boss ID/);
   await audio.dispose();
 });
 
