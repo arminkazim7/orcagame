@@ -23,11 +23,14 @@ export class LifeManager {
     return { collected: true, amount: 1, lives: this.lives };
   }
   loseLife(options = {}) {
-    if (this.lives <= 0) return { lost: false, recovered: false, lives: 0 };
-    this.lives -= 1;
-    this.#emit('life.lost', { lives: this.lives, reason: options.reason ?? 'damage' });
-    if (this.lives > 0) return { lost: true, recovered: false, lives: this.lives };
-    return { lost: true, ...this.recoverPlayer(options) };
+    if (this.lives <= 0) return { lost: false, recovered: false, lives: 0, amount: 0 };
+    const requested = Number(options.amount ?? 1);
+    const amount = Number.isFinite(requested) ? Math.max(1, Math.floor(requested)) : 1;
+    const lost = Math.min(this.lives, amount);
+    this.lives -= lost;
+    this.#emit('life.lost', { amount: lost, lives: this.lives, reason: options.reason ?? 'damage' });
+    if (this.lives > 0) return { lost: true, recovered: false, amount: lost, lives: this.lives };
+    return { lost: true, amount: lost, ...this.recoverPlayer(options) };
   }
   recoverPlayer({ levelStart = this.levelStart } = {}) {
     this.deathCount += 1;
