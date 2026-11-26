@@ -38,6 +38,12 @@ export class OrcaPhysics {
     this.dropTimer = 0;
   }
 
+  resetTransientState() {
+    this.jumpWasDown = false;
+    this.dropWasDown = false;
+    this.dropTimer = 0;
+  }
+
   update(orca, deltaTime, input, platforms = [], hooks = {}) {
     const dt = Math.min(Math.max(deltaTime, 0), 1 / 30);
     const left = inputDown(input, PLAYER_CONTROLS.left, 'left');
