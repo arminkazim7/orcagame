@@ -304,6 +304,28 @@ test('void falls bypass invulnerability and respawn safely in every campaign lev
   }
 });
 
+test('all-lives recovery places player safely on start floor and pauses for recovery UI', () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    const level = game.startLevel(4);
+    game.lives.loseLife({reason:'test'});
+    game.lives.loseLife({reason:'test'});
+    const result = game.lives.loseLife({reason:'test', levelStart:level.start});
+    assert.equal(result.recovered, true);
+    assert.equal(game.state.gameplay.paused, true);
+    assert.equal(game.player.x, level.start.x);
+    const floor = level.platforms.find(p => !p.oneWay && level.start.x + game.player.width > p.x && level.start.x < p.x + p.w);
+    assert.ok(floor, 'level start must have a solid supporting floor');
+    assert.equal(game.player.y, floor.y - game.player.height);
+    assert.equal(game.player.grounded, true);
+    assert.ok(game.world.fallRecoveryMs > 0);
+    game.state.gameplay.paused = false;
+    for (let frame = 0; frame < 120; frame++) game.world.update(1 / 60, game.state, game.events, game.input);
+    assert.equal(game.player.y, floor.y - game.player.height);
+    assert.equal(game.player.grounded, true);
+  } finally { game.dispose(); game.world.encounters.clearEnemies(); }
+});
+
 test('authored hazards apply combat damage through the shared event bus', () => {
   const game = createGameRuntime({ audioEnabled: false });
   try {
