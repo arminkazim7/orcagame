@@ -293,6 +293,7 @@ test('void falls bypass invulnerability and respawn safely in every campaign lev
       assert.equal(game.lives.getLives(), before - 1, `level ${number}: void fall must cost a life despite invulnerability`);
       assert.equal(game.player.x, level.start.x, `level ${number}: respawn should return to level start`);
       assert.equal(game.player.y, GAME_CONFIG.physics.groundY - game.player.height, `level ${number}: respawn should be flush with the starting floor`);
+      assert.equal(game.player.grounded, true, `level ${number}: respawn must mark the player grounded`);
       for (let frame = 0; frame < 120; frame++) game.world.update(1 / 60, game.state, game.events, game.input);
       assert.equal(game.lives.getLives(), before - 1, `level ${number}: safe respawn must not repeatedly fall`);
       assert.ok(game.player.grounded, `level ${number}: player should land on the starting floor`);
