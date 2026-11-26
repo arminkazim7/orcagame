@@ -65,7 +65,7 @@ test('runtime starts a level, spawns enemies and creates the configured boss', (
     assert.equal(game.input.isDown('Space'), true);
   } finally {
     game.dispose();
-    game.world.encounters.clearEnemies();
+    game.world.encounters.game.world.encounters.clearEnemies();
   }
 });
 
@@ -83,7 +83,7 @@ test('boss defeat bridges the configured campaign boss ID into progression', () 
     assert.equal(game.state.status, 'victory');
   } finally {
     game.dispose();
-    clearEnemies();
+    game.world.encounters.clearEnemies();
   }
 });
 
@@ -102,24 +102,24 @@ test('player horizontal movement is blocked by live enemy colliders', () => {
     game.input.setControl('right', true);
     for (let i = 0; i < 10; i++) game.world.update(1 / 60, game.state, game.events, game.input);
     assert.ok(game.player.x + game.player.width <= enemy.x + 0.01, 'player should stop at enemy left edge');
-  } finally { game.dispose(); clearEnemies(); }
+  } finally { game.dispose(); game.world.encounters.clearEnemies(); }
 });
 
 
-test('enemy contact damage deducts a life through the runtime event bridge',()=>{const game=createGameRuntime({audioEnabled:false});try{game.startLevel(1);const enemy=game.world.encounters.getEnemiesForCollision()[0];enemy.speed=0;enemy.vy=0;enemy.touchCooldown=0;game.player.setInvulnerable(0);enemy.x=game.player.x;enemy.y=game.player.y;enemy.patrolMin=enemy.x;enemy.patrolMax=enemy.x+enemy.w;const before=game.lives.getLives();game.world.update(1/60,game.state,game.events,game.input);assert.equal(game.lives.getLives(),before-1);assert.ok(game.player.invulnerabilityMs>0);}finally{game.dispose();clearEnemies();}});
+test('enemy contact damage deducts a life through the runtime event bridge',()=>{const game=createGameRuntime({audioEnabled:false});try{game.startLevel(1);const enemy=game.world.encounters.getEnemiesForCollision()[0];enemy.speed=0;enemy.vy=0;enemy.touchCooldown=0;game.player.setInvulnerable(0);enemy.x=game.player.x;enemy.y=game.player.y;enemy.patrolMin=enemy.x;enemy.patrolMax=enemy.x+enemy.w;const before=game.lives.getLives();game.world.update(1/60,game.state,game.events,game.input);assert.equal(game.lives.getLives(),before-1);assert.ok(game.player.invulnerabilityMs>0);}finally{game.dispose();game.world.encounters.clearEnemies();}});
 
 test('each campaign level contains one unique badge collectible',()=>{for(let n=1;n<=15;n++){const level=createLevel(n);const badges=level.collectibles.filter(i=>i.type==='badge');assert.equal(badges.length,1);assert.equal(badges[0].badgeId,n);assert.equal(badges[0].id,'badge-'+n);assert.ok(level.platforms.some(p=>badges[0].x>=p.x&&badges[0].x+30<=p.x+p.w));}});
 
-test('badge pickup is stored in runtime profile even without a UI',()=>{const game=createGameRuntime({audioEnabled:false});try{game.startLevel(1);const badge=game.world.level.collectibles.find(i=>i.type==='badge');game.player.setInvulnerable(0);game.player.x=badge.x;game.player.y=badge.y;game.player.vx=0;game.player.vy=0;game.world.update(1/60,game.state,game.events,game.input);assert.ok(game.profile.badges.includes(1));assert.equal(badge.collected,true);}finally{game.dispose();clearEnemies();}});
+test('badge pickup is stored in runtime profile even without a UI',()=>{const game=createGameRuntime({audioEnabled:false});try{game.startLevel(1);const badge=game.world.level.collectibles.find(i=>i.type==='badge');game.player.setInvulnerable(0);game.player.x=badge.x;game.player.y=badge.y;game.player.vx=0;game.player.vy=0;game.world.update(1/60,game.state,game.events,game.input);assert.ok(game.profile.badges.includes(1));assert.equal(badge.collected,true);}finally{game.dispose();game.world.encounters.clearEnemies();}});
 
 test('combat events are normalized on shared bus and progression reacts once',()=>{
  const game=createGameRuntime({audioEnabled:false});const seen={damage:[],enemy:[],boss:[]};
  const offs=[game.events.on('player.damaged',p=>seen.damage.push(p)),game.events.on('enemy.defeated',p=>seen.enemy.push(p)),game.events.on('boss.defeated',p=>seen.boss.push(p))];
  try{
-  game.startLevel(1);const enemy=getEnemyState().enemies[0];enemy.speed=0;enemy.vy=0;enemy.touchCooldown=0;enemy.x=game.player.x;enemy.y=game.player.y;enemy.patrolMin=enemy.x;enemy.patrolMax=enemy.x+enemy.w;game.player.setInvulnerable(0);const lives=game.lives.getLives();game.world.update(1/60,game.state,game.events,game.input);
+  game.startLevel(1);const enemy=game.world.encounters.getEnemiesForCollision()[0];enemy.speed=0;enemy.vy=0;enemy.touchCooldown=0;enemy.x=game.player.x;enemy.y=game.player.y;enemy.patrolMin=enemy.x;enemy.patrolMax=enemy.x+enemy.w;game.player.setInvulnerable(0);const lives=game.lives.getLives();game.world.update(1/60,game.state,game.events,game.input);
   assert.equal(seen.damage.length,1);assert.equal(game.lives.getLives(),lives-1);assert.equal(seen.damage[0].source,'contact');assert.equal(seen.damage[0].applied,true);
   game.progression.unlockAllLevels();const level=game.startLevel(3);game.player.x=level.boss.arena.x;game.player.y=level.boss.arena.y-game.player.height;game.world.update(1/60,game.state,game.events,game.input);const boss=game.world.encounters.getBoss(1);assert.ok(boss);game.world.encounters.damageBoss(1,boss.maxHealth);game.world.update(1.5,game.state,game.events,game.input);assert.equal(seen.boss.length,1);assert.equal(seen.boss[0].bossId,'boss-w1');assert.ok(game.progression.defeatedBosses.includes('boss-w1'));
- }finally{offs.forEach(off=>off());game.dispose();clearEnemies();}
+ }finally{offs.forEach(off=>off());game.dispose();game.world.encounters.clearEnemies();}
 });
 
 
@@ -127,13 +127,13 @@ test('runtime uses authored enemy spawn positions rather than cycling across pla
   const game = createGameRuntime({ audioEnabled: false });
   try {
     const level = game.startLevel(1);
-    const enemies = getEnemyState().enemies;
+    const enemies = game.world.encounters.getEnemiesForCollision();
     assert.equal(enemies.length, 4);
     for (let i = 0; i < level.enemySpawnPoints.length; i++) {
       assert.equal(enemies[i].x, level.enemySpawnPoints[i].x);
       assert.equal(enemies[i].y, level.enemySpawnPoints[i].y);
     }
-  } finally { game.dispose(); clearEnemies(); }
+  } finally { game.dispose(); game.world.encounters.clearEnemies(); }
 });
 
 test('falling through an authored terrain gap costs a life and respawns safely', () => {
@@ -149,7 +149,7 @@ test('falling through an authored terrain gap costs a life and respawns safely',
     assert.equal(game.player.x, level.start.x);
     assert.ok(game.player.y < level.height);
     assert.ok(game.player.invulnerabilityMs > 0);
-  } finally { game.dispose(); clearEnemies(); }
+  } finally { game.dispose(); game.world.encounters.clearEnemies(); }
 });
 
 test('authored hazards apply combat damage through the shared event bus', () => {
@@ -165,7 +165,7 @@ test('authored hazards apply combat damage through the shared event bus', () => 
     game.player.vy = 0;
     game.world.update(1 / 60, game.state, game.events, game.input);
     assert.equal(game.lives.getLives(), before - 1);
-  } finally { game.dispose(); clearEnemies(); }
+  } finally { game.dispose(); game.world.encounters.clearEnemies(); }
 });
 
 
