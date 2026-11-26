@@ -89,7 +89,7 @@ test('player projectile damages and defeats an enemy, emitting events', () => {
   assert.equal(serializeEncounter().particles.length > 0, true, 'defeat spawns particle effect');
 });
 
-test('contact damage emits player:damaged to progression', () => {
+test('contact damage emits player.damaged to progression', () => {
   clearEnemies();
   configure({ contactGrace: 0 });
   const damaged = [];
@@ -112,7 +112,7 @@ test('invulnerable player (power-up protection) takes no contact damage', () => 
   assert.equal(damaged.length, 0);
 });
 
-test('stomp defeats a grounded enemy and emits enemy:stomped', () => {
+test('stomp defeats a grounded enemy and emits enemy.stomped', () => {
   clearEnemies();
   configure({ stompEnabled: true, contactGrace: 0 });
   const stomps = [];
