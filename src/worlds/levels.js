@@ -35,7 +35,7 @@ export function createLevel(levelNumber) {
     id: `level-${String(number).padStart(2, '0')}`, number,
     name: `${world.name} — Dive ${((number - 1) % 3) + 1}`,
     world, worldIndex: worldIndex + 1, width: GAME_CONFIG.physics.worldWidth,
-    height: GAME_CONFIG.canvas.height, gravity: GAME_CONFIG.physics.gravity,
+    height: GAME_CONFIG.physics.worldHeight, gravity: GAME_CONFIG.physics.gravity,
     platforms, hazards: authored.hazards.map(item => ({ ...item })),
     decorations: authored.decorations.map(item => ({ ...item })),
     enemySpawnPoints: authored.enemySpawnPoints.map(point => ({ ...point })),
@@ -47,4 +47,13 @@ export function createLevel(levelNumber) {
   };
 }
 
-export const LEVELS = Object.freeze(Array.from({ length: GAME_CONFIG.progression.totalLevels }, (_, index) => createLevel(index + 1)));
+const deepFreeze = value => {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze(child);
+  }
+  return value;
+};
+
+// Immutable catalogue for menus/tests. Runtime code must call createLevel() for a fresh run.
+export const LEVELS = deepFreeze(Array.from({ length: GAME_CONFIG.progression.totalLevels }, (_, index) => createLevel(index + 1)));
