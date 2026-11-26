@@ -83,7 +83,7 @@ export class WorldSystem {
     this.encounters.spawnEnemies({
       level: number,
       difficulty: this.progression.difficulty,
-      platforms: level.platforms.filter(platform => platform.oneWay),
+      platforms: level.platforms,
       spawnPoints: level.enemySpawnPoints
     });
     this.ui?.showGameplay?.({ level: number, world: level.world.name });
