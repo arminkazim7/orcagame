@@ -100,7 +100,7 @@ export class WorldSystem {
     // Until then the boss does not exist and cannot patrol or attack from off-screen.
     if (level.boss && !this.bossEncounterStarted &&
         this.player.x + this.player.width >= level.boss.arena.x) {
-      spawnBoss({
+      this.encounters.spawnBoss({
         world: level.boss.world,
         difficulty: this.progression.difficulty,
         arena: level.boss.arena
