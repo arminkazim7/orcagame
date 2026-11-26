@@ -9,7 +9,7 @@ test('level two opening platform is within a comfortable jump from the starting 
   const level = createLevel(2);
   const startFloor = level.platforms.find(platform => platform.id === 'lagoon-start');
   const firstPlatform = level.platforms.find(platform => platform.id === 'bubble-step');
-  const maxJumpHeight = (570 * 570) / (2 * 1450);
+  const maxJumpHeight = (570 * 570) / (2 * GAME_CONFIG.physics.gravity);
   assert.ok(firstPlatform.y < startFloor.y, 'opening platform should be elevated');
   assert.ok(startFloor.y - firstPlatform.y <= maxJumpHeight - 25,
     'opening platform should leave a safety margin below the orca jump apex');
@@ -21,6 +21,8 @@ test('level two opening platform is within a comfortable jump from the starting 
 test('all authored platforms in all fifteen levels are reachable by a safe jump chain', () => {
   const jumpVelocity = 570;
   const moveSpeed = 250;
+  const acceleration = 1800;
+  const accelerationTime = moveSpeed / acceleration;
   const gravity = GAME_CONFIG.physics.gravity;
   const playerWidth = 66;
   const maxRise = jumpVelocity ** 2 / (2 * gravity) - 15;
@@ -34,8 +36,11 @@ test('all authored platforms in all fifteen levels are reachable by a safe jump 
       const rise = from.y - to.y;
       if (rise > maxRise) return false;
       const flightTime = (jumpVelocity + Math.sqrt(jumpVelocity ** 2 - 2 * gravity * rise)) / gravity;
+      const horizontalTravel = flightTime <= accelerationTime
+        ? 0.5 * acceleration * flightTime ** 2
+        : 0.5 * acceleration * accelerationTime ** 2 + moveSpeed * (flightTime - accelerationTime);
       const horizontalGap = Math.max(0, to.x - (from.x + from.w), from.x - (to.x + to.w));
-      return horizontalGap <= moveSpeed * flightTime + playerWidth - 20;
+      return horizontalGap <= horizontalTravel + playerWidth - 20;
     };
     for (let index = 0; index < queue.length; index++) {
       const from = platforms[queue[index]];
@@ -46,6 +51,11 @@ test('all authored platforms in all fifteen levels are reachable by a safe jump 
         }
       }
     }
+    const floors = platforms.filter(platform => !platform.oneWay).sort((a, b) => a.x - b.x);
+    assert.ok(floors.every((floor, index) => index === 0 || floor.x - (floors[index - 1].x + floors[index - 1].w) <= 160),
+      `level ${level.number} has an excessive floor gap`);
+    assert.equal(floors.at(-1).x + floors.at(-1).w, level.width,
+      `level ${level.number} must have floor support through its exit`);
     assert.equal(reachable.size, platforms.length,
       `level ${level.number} has unreachable platforms: ${platforms.filter((_, i) => !reachable.has(i)).map(p => p.id).join(', ')}`);
   }
