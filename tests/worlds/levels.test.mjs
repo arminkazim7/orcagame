@@ -25,8 +25,66 @@ test('level two opening platform is within a comfortable jump from the starting 
 });
 import assert from 'node:assert/strict';
 import { createLevel, LEVELS } from '../../src/worlds/levels.js';
+import { GAME_CONFIG } from '../../src/game-config.js';
 import { createGameRuntime } from '../../src/main.js';
 import { BOSS_DEFS } from '../../src/enemies/bosses.js';
+
+
+test('all authored platforms in all fifteen levels are reachable by a safe jump chain', () => {
+  const jumpVelocity = 570;
+  const moveSpeed = 250;
+  const gravity = GAME_CONFIG.physics.gravity;
+  const playerWidth = 66;
+  const maxRise = jumpVelocity ** 2 / (2 * gravity) - 15;
+  for (const level of LEVELS) {
+    const platforms = level.platforms;
+    const start = platforms.findIndex(platform => !platform.oneWay && platform.x === 0);
+    assert.notEqual(start, -1, `level ${level.number} needs a starting floor`);
+    const reachable = new Set([start]);
+    const queue = [start];
+    const canJump = (from, to) => {
+      const rise = from.y - to.y;
+      if (rise > maxRise) return false;
+      const flightTime = (jumpVelocity + Math.sqrt(jumpVelocity ** 2 - 2 * gravity * rise)) / gravity;
+      const horizontalGap = Math.max(0, to.x - (from.x + from.w), from.x - (to.x + to.w));
+      return horizontalGap <= moveSpeed * flightTime + playerWidth - 20;
+    };
+    for (let index = 0; index < queue.length; index++) {
+      const from = platforms[queue[index]];
+      for (let next = 0; next < platforms.length; next++) {
+        if (!reachable.has(next) && canJump(from, platforms[next])) {
+          reachable.add(next);
+          queue.push(next);
+        }
+      }
+    }
+    assert.equal(reachable.size, platforms.length,
+      `level ${level.number} has unreachable platforms: ${platforms.filter((_, i) => !reachable.has(i)).map(p => p.id).join(', ')}`);
+  }
+});
+
+test('level catalogue is deeply immutable and runtime levels have independent data and pickup state', () => {
+  assert.ok(Object.isFrozen(LEVELS));
+  assert.ok(Object.isFrozen(LEVELS[0]));
+  assert.ok(Object.isFrozen(LEVELS[0].platforms));
+  assert.ok(Object.isFrozen(LEVELS[0].platforms[0]));
+  assert.ok(Object.isFrozen(LEVELS[0].collectibles));
+  const first = createLevel(1);
+  const second = createLevel(1);
+  assert.notEqual(first.platforms, second.platforms);
+  assert.notEqual(first.collectibles, second.collectibles);
+  assert.equal(Object.hasOwn(first.collectibles[0], 'collected'), false);
+  first.collectibles[0].x += 100;
+  assert.notEqual(first.collectibles[0].x, second.collectibles[0].x);
+  assert.notEqual(first.collectibles[0].x, LEVELS[0].collectibles[0].x);
+});
+
+test('level world height and camera viewport are independent of canvas backing-store size', () => {
+  const level = createLevel(1);
+  assert.equal(level.height, GAME_CONFIG.physics.worldHeight);
+  assert.notEqual(level.height, GAME_CONFIG.canvas.height);
+  assert.equal(GAME_CONFIG.physics.worldHeight, 840);
+});
 
 test('campaign contains fifteen valid layouts across five worlds', () => {
   assert.equal(LEVELS.length, 15);
@@ -162,7 +220,8 @@ test('enemy contact damage deducts a life through the runtime event bridge',()=>
 
 test('each campaign level contains one unique badge collectible',()=>{for(let n=1;n<=15;n++){const level=createLevel(n);const badges=level.collectibles.filter(i=>i.type==='badge');assert.equal(badges.length,1);assert.equal(badges[0].badgeId,n);assert.equal(badges[0].id,'badge-'+n);assert.ok(level.platforms.some(p=>badges[0].x>=p.x&&badges[0].x+30<=p.x+p.w));}});
 
-test('badge pickup is stored in runtime profile even without a UI',()=>{const game=createGameRuntime({audioEnabled:false});try{game.startLevel(1);const badge=game.world.level.collectibles.find(i=>i.type==='badge');game.player.setInvulnerable(0);game.player.x=badge.x;game.player.y=badge.y;game.player.vx=0;game.player.vy=0;game.world.update(1/60,game.state,game.events,game.input);assert.ok(game.profile.badges.includes(1));assert.equal(badge.collected,true);}finally{game.dispose();game.world.encounters.clearEnemies();}});
+test('badge pickup is stored in runtime profile even without a UI',()=>{const game=createGameRuntime({audioEnabled:false});try{game.startLevel(1);const badge=game.world.level.collectibles.find(i=>i.type==='badge');game.player.setInvulnerable(0);game.player.x=badge.x;game.player.y=badge.y;game.player.vx=0;game.player.vy=0;game.world.update(1/60,game.state,game.events,game.input);assert.ok(game.profile.badges.includes(1));assert.equal(game.world.collectibleState.has(badge.id),true);
+assert.equal(Object.hasOwn(badge,'collected'),false);}finally{game.dispose();game.world.encounters.clearEnemies();}});
 
 test('combat events are normalized on shared bus and progression reacts once',()=>{
  const game=createGameRuntime({audioEnabled:false});const seen={damage:[],enemy:[],boss:[]};
