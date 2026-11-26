@@ -86,7 +86,7 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
   ui?.showMainMenu();
   const keyActions = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', Space: 'jump', ArrowUp: 'jump', KeyW: 'jump', ArrowDown: 'dropThrough', KeyS: 'dropThrough', KeyX: 'shoot', KeyF: 'shoot' };
   const keyTarget = typeof window !== 'undefined' ? window : null;
-  const isInteractiveTarget = target => Boolean(target?.closest?.('input,textarea,select,button,a,[contenteditable="true"],[role="button"]'));
+  const isInteractiveTarget = target => Boolean(target?.closest?.('input,textarea,select,[contenteditable="true"]'));
   const onKeyDown = event => {
     if (event.code === 'Escape' && ui && world.level) {
       event.preventDefault();
