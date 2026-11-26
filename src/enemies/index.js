@@ -374,7 +374,7 @@ function updateParticles(dt) {
 // ---------------------------------------------------------------------------
 
 /** Render enemies, projectiles, particles, and the boss + its health bar. */
-export function renderEnemies(g, camera = { x: 0, y: 0 }) {
+export function renderEnemies(g) {
   if (!g) return;
   const ox = camera.x, oy = camera.y;
 
@@ -382,7 +382,7 @@ export function renderEnemies(g, camera = { x: 0, y: 0 }) {
   for (const pt of state.particles) {
     g.globalAlpha = Math.max(0, pt.life / pt.maxLife);
     g.fillStyle = pt.color;
-    g.fillRect(pt.x - ox - pt.size / 2, pt.y - oy - pt.size / 2, pt.size, pt.size);
+    g.fillRect(pt.x - pt.size / 2, pt.y - pt.size / 2, pt.size, pt.size);
   }
   g.globalAlpha = 1;
 
@@ -390,7 +390,7 @@ export function renderEnemies(g, camera = { x: 0, y: 0 }) {
   for (const p of state.projectiles) {
     g.fillStyle = p.color;
     g.beginPath();
-    g.arc(p.x - ox, p.y - oy, p.radius, 0, Math.PI * 2);
+    g.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
     g.fill();
   }
 
@@ -398,12 +398,12 @@ export function renderEnemies(g, camera = { x: 0, y: 0 }) {
   for (const e of state.enemies) {
     if (e.dead) continue;
     g.fillStyle = e.hitFlash > 0 ? '#ffffff' : e.palette;
-    g.fillRect(e.x - ox, e.y - oy, e.w, e.h);
+    g.fillRect(e.x, e.y, e.w, e.h);
     // eyes face travel direction
     g.fillStyle = '#fff';
     const ex = e.dir > 0 ? e.x + e.w - 10 : e.x + 4;
-    g.fillRect(ex - ox, e.y + 5 - oy, 3, 6);
-    g.fillRect(ex + (e.dir > 0 ? 4 : -6) - ox, e.y + 5 - oy, 3, 6);
+    g.fillRect(ex, e.y + 5, 3, 6);
+    g.fillRect(ex + (e.dir > 0 ? 4 : -6), e.y + 5, 3, 6);
   }
 
   // Boss
@@ -412,7 +412,7 @@ export function renderEnemies(g, camera = { x: 0, y: 0 }) {
     const alpha = boss.defeated ? Math.max(0, boss.defeatTimer / DEFEAT_ANIMATION_DURATION) : 1;
     g.globalAlpha = alpha;
     g.save();
-    g.translate(boss.x - ox + boss.w / 2, boss.y - oy + boss.h / 2);
+    g.translate(boss.x + boss.w / 2, boss.y + boss.h / 2);
     g.fillStyle = boss.hitFlash > 0 ? '#fff' : boss.def.color;
     g.strokeStyle = boss.def.accent;
     g.lineWidth = 4;
@@ -436,15 +436,15 @@ export function renderEnemies(g, camera = { x: 0, y: 0 }) {
     const by = 24;
     g.globalAlpha = 1;
     g.fillStyle = '#222';
-    g.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
+    g.fillRect(bx + (camera?.x ?? 0) - 2, by + (camera?.y ?? 0) - 2, bw + 4, bh + 4);
     g.fillStyle = '#444';
-    g.fillRect(bx, by, bw, bh);
+    g.fillRect(bx + (camera?.x ?? 0), by + (camera?.y ?? 0), bw, bh);
     g.fillStyle = boss.def.accent;
-    g.fillRect(bx, by, bw * Math.max(0, boss.health / boss.maxHealth), bh);
+    g.fillRect(bx + (camera?.x ?? 0), by + (camera?.y ?? 0), bw * Math.max(0, boss.health / boss.maxHealth), bh);
     g.fillStyle = '#fff';
     g.font = 'bold 12px sans-serif';
     g.textAlign = 'center';
-    g.fillText(`${boss.def.name} — World ${boss.world}`, bx + bw / 2, by + 13);
+    g.fillText(`${boss.def.name} — World ${boss.world}`, bx + (camera?.x ?? 0) + bw / 2, by + (camera?.y ?? 0) + 13);
   }
 }
 
