@@ -90,7 +90,7 @@ test('invalid player position in gameplay state rolls back manager changes', () 
 });
 
 test('getSaveVersion returns current schema version', () => {
-  assert.equal(makeHarness().save.getSaveVersion(), 1);
+  assert.equal(makeHarness().save.getSaveVersion(), 2);
 });
 
 test('downloadSave keeps the object URL alive until after the browser handles the click', () => {
@@ -138,4 +138,15 @@ test('restorePlayer ignores unlisted properties and cannot replace the player pr
   assert.equal(Object.getPrototypeOf(h.player), originalPrototype);
   assert.equal(Object.hasOwn(h.player, '__proto__'), false);
   assert.equal(h.player.x, 120);
+});
+
+
+test('version 1 saves migrate to version 2 and never restore paused state', async () => {
+  const h = makeHarness();
+  const legacy = h.save.createSave();
+  legacy.version = 1;
+  legacy.gameplayState.paused = true;
+  const result = await h.save.loadSave(JSON.stringify(legacy));
+  assert.equal(result.loaded, true);
+  assert.equal(result.version, 2);
 });
