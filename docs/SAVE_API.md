@@ -25,7 +25,7 @@ Manager dependencies are optional. The save service uses the managers' `serializ
 
 ## Public methods
 
-- `getSaveVersion()` — returns the current schema version (`1`).
+- `getSaveVersion()` — returns the current schema version (`2`).
 - `createSave(overrides?)` — returns a plain JSON-compatible object. `overrides.profile` can override profile fields; `overrides.gameplayState` can supply a complete gameplay snapshot.
 - `validateSave(data)` — returns `{ valid, errors }`; does not mutate runtime state.
 - `applySave(data)` — validates first, then applies state; returns `{ applied, version }` or `{ applied: false, errors }`.
@@ -35,17 +35,18 @@ Manager dependencies are optional. The save service uses the managers' `serializ
 
 `downloadSave` and `pickAndLoadSave` require a browser DOM. Parsing, validation, creation, and application can be tested in Node.
 
-## Version 1 schema
+## Version 2 schema
 
 The integrated campaign configures 15 levels; standalone SaveManager callers may pass a different `totalLevels` only when intentionally using it outside the campaign. The JSON includes `version`, `savedAt`, player `name` and hex `colour`, `difficulty`, `cheatUnlocked`, progression level unlocks/completions, Easy/Hard records, permanent Gold levels, boss unlock/defeat state, Orcalord unlock state, `score`, `lives`, `deathCount`, `activePowerUp`, `powerUpProtectionHits`, `checkpoint`, `nextBonusLifeThreshold`, `awardedBonusLifeThresholds`, and `gameplayState`.
 
-`gameplayState.player` captures common position/physics fields (`x`, `y`, `vx`, `vy`, `grounded`, `facing`, `rotation`, `animationState`). Additional world/enemy/object state can be included through `getGameplayState` / `setGameplayState`.
+`gameplayState.player` captures common position/physics fields (`x`, `y`, `vx`, `vy`, `grounded`, `facing`, `rotation`, `animationState`). The active world stores level/time/camera/completion state, collectible flags, and a versioned encounter DTO (`encounter.schemaVersion: 1`) with explicit enemy, projectile, particle, and boss fields. Runtime-only properties are not serialized. Pause state is intentionally excluded; imported games resume unpaused.
 
 ## Validation and safety
 
-- Only exact `SAVE_VERSION` is accepted. Future/older versions are rejected; no implicit migration is attempted.
+- Version 2 is the current format. Version 1 saves are migrated on load: pause state is discarded and legacy encounter objects are projected into the versioned encounter DTO. Unknown future versions are rejected.
 - IDs, level ranges, score/life/death bounds, colour format, power-up IDs, milestone progression, Gold/completion rules, and boss progression are checked.
-- A save is fully validated before manager mutation. Application failures trigger a best-effort rollback to captured manager/profile/player state.
+- The complete save is validated before manager mutation, including world/collectible consistency and deep encounter entity validation. World restoration uses `WorldSystem.restore(snapshot)` and does not replay level/boss start events, reset checkpoints, or require `startLevel()`; the same side-effect-free restore path is used for rollback.
+- Encounter entity snapshots use a versioned DTO rather than copying complete runtime objects. `EncounterSystem` validates the DTO before applying it.
 - Invalid JSON, unsupported versions, unknown IDs, and inconsistent state return errors instead of throwing through the game loop.
 - Manual JSON download and file-picker load are the primary persistence path. No local-storage dependency is used.
 
@@ -53,7 +54,7 @@ The integrated campaign configures 15 levels; standalone SaveManager callers may
 
 1. Construct `SaveManager` after the progression/life/score/power-up/checkpoint managers.
 2. Pass the live player profile object so loaded name/colour/cheat state updates the game profile.
-3. Supply `getGameplayState` and `setGameplayState` for game-specific state not represented by the listed managers.
+3. Supply `getGameplayState`, `validateGameplayState`, and `setGameplayState` for game-specific state not represented by the listed managers. `setGameplayState` should call the world system's side-effect-free `restore()` method.
 4. Wire a Save UI action to `downloadSave()` and a Load UI action to `pickAndLoadSave()`.
 5. On load failure, show the returned `errors`; do not reset or partially initialize the game.
 
