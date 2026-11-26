@@ -1,25 +1,27 @@
+import { GAME_CONFIG } from '../game-config.js';
+
 /** Draws the active level and its world-space entities. */
 export class LevelRenderer {
   render(world, ctx) {
     if (!world.level) {
       ctx.fillStyle = '#063b58';
-      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.fillRect(0, 0, GAME_CONFIG.canvas.width, GAME_CONFIG.canvas.height);
       world.player.render(ctx, 0);
       return;
     }
     const level = world.level;
     const [top, bottom] = level.background;
     const theme = level.theme ?? { terrain: '#143d48', trim: '#4eb7a1', accent: '#70d8c2', detail: '#d8f2e8' };
-    const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+    const gradient = ctx.createLinearGradient(0, 0, 0, GAME_CONFIG.canvas.height);
     gradient.addColorStop(0, top);
     gradient.addColorStop(1, bottom);
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillRect(0, 0, GAME_CONFIG.canvas.width, GAME_CONFIG.canvas.height);
 
     for (let i = 0; i < 12; i++) {
-      const x = ((i * 173 - world.cameraX * 0.18 - world.cameraY * 0.08) % (ctx.canvas.width + 100) + ctx.canvas.width + 100) % (ctx.canvas.width + 100);
+      const x = ((i * 173 - world.cameraX * 0.18 - world.cameraY * 0.08) % (GAME_CONFIG.canvas.width + 100) + GAME_CONFIG.canvas.width + 100) % (GAME_CONFIG.canvas.width + 100);
       ctx.fillStyle = 'rgba(210,245,255,0.045)';
-      ctx.fillRect(x, 0, 22, ctx.canvas.height);
+      ctx.fillRect(x, 0, 22, GAME_CONFIG.canvas.height);
       ctx.strokeStyle = 'rgba(210,245,255,0.22)';
       ctx.beginPath();
       ctx.arc(x + 38, 75 + (i * 31) % 330, 3 + i % 4, 0, Math.PI * 2);
@@ -44,7 +46,7 @@ export class LevelRenderer {
     ctx.fillRect(level.exit.x, level.exit.y, level.exit.w, level.exit.h);
     ctx.fillStyle = '#174f61';
     ctx.fillRect(level.exit.x + 10, level.exit.y + 10, level.exit.w - 20, level.exit.h - 10);
-    for (const item of level.collectibles) this.#drawCollectible(ctx, item);
+    for (const item of level.collectibles) this.#drawCollectible(ctx, item, world.collectibleState.has(item.id));
     world.player.render(ctx);
     world.encounters.renderEnemies(ctx, { x: world.cameraX, y: world.cameraY });
     ctx.restore();
@@ -97,8 +99,8 @@ export class LevelRenderer {
     ctx.restore();
   }
 
-  #drawCollectible(ctx, item) {
-    if (item.collected) return;
+  #drawCollectible(ctx, item, collected = false) {
+    if (collected) return;
     ctx.save();
     ctx.translate(item.x + 15, item.y + 15);
     if (item.type === 'badge') {
