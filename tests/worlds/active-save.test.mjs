@@ -161,3 +161,20 @@ test('loading an active level does not require it to be unlocked in the destinat
     assert.equal(target.world.level.number, 3);
   } finally { source.dispose(); target.dispose(); }
 });
+
+
+test('deep encounter validation rejects invalid entities before mutating runtime state', () => {
+  const game = createGameRuntime({ audioEnabled: false });
+  try {
+    game.progression.unlockAllLevels();
+    game.startLevel(1);
+    const save = game.saves.createSave();
+    save.gameplayState.world.encounter.enemies.push({ type: 'walker', x: NaN });
+    const beforeLevel = game.world.level.number;
+    const beforeLives = game.lives.getLives();
+    const result = game.saves.applySave(save);
+    assert.equal(result.applied, false);
+    assert.equal(game.world.level.number, beforeLevel);
+    assert.equal(game.lives.getLives(), beforeLives);
+  } finally { game.dispose(); }
+});
