@@ -1,10 +1,7 @@
 import { createLevel } from './levels.js';
 import { LevelRenderer } from './LevelRenderer.js';
 import { CombatResolver } from './CombatResolver.js';
-import {
-  spawnEnemies, updateEnemies, renderEnemies, spawnBoss, updateBoss,
-  getBoss, clearEnemies, serializeEncounter, restoreEncounter, events as enemyEvents, getEnemiesForCollision
-} from '../enemies/index.js';
+import { EncounterSystem } from '../enemies/index.js';
 
 const intersects = (a, b) =>
   a.x < b.x + b.w && a.x + a.w > b.x &&
@@ -31,6 +28,7 @@ export class WorldSystem {
     this.bossEncounterStarted = false;
     this.elapsed = 0;
     this.hudElapsed = 0;
+    this.encounters = new EncounterSystem(events);
     this.renderer = new LevelRenderer();
     this.combat = new CombatResolver({ events, lives, state, player, ui, getLevel: () => this.level });
     this.playerCombatant = {
@@ -43,22 +41,9 @@ export class WorldSystem {
       onDamaged: (amount, source) => player.takeDamage({ emitEvent: false, source })
     };
     this.unsubscribers = [
-      enemyEvents.on('enemy:defeated', event => {
-        const { type: _type, ...payload } = event ?? {};
-        this.events.emit('enemy.defeated', payload);
-        this.score.addScore(250);
-      }),
-      enemyEvents.on('enemy:stomped', event => { const { type: _type, ...payload } = event ?? {}; this.player.vy = -300; this.player.grounded = false; this.events.emit('enemy.stomped', payload); }),
-      enemyEvents.on('player:damaged', event => { const { type: _type, ...payload } = event ?? {}; if (payload.applied) this.events.emit('player.damaged', payload); }),
-
-      enemyEvents.on('boss:damaged', event => { const { type: _type, ...payload } = event ?? {}; this.events.emit('boss.damaged', { ...payload, bossId: this.level?.boss?.id ?? payload.bossId }); }),
-      enemyEvents.on('boss:defeating', event => { const { type: _type, ...payload } = event ?? {}; this.events.emit('boss.defeating', { ...payload, bossId: this.level?.boss?.id ?? payload.bossId }); }),
-      enemyEvents.on('boss:defeated', event => {
-        const { type: _type, ...payload } = event ?? {};
-        const bossId = this.level?.boss?.id ?? payload.bossId;
-        this.events.emit('boss.defeated', { ...payload, bossId });
-        this.#completeLevel(bossId);
-      })
+      events.on('enemy.defeated', () => this.score.addScore(250)),
+      events.on('enemy.stomped', () => { this.player.vy = -300; this.player.grounded = false; }),
+      events.on('boss.defeated', event => this.#completeLevel(this.level?.boss?.id ?? event?.bossId))
     ];
 
   }
@@ -66,7 +51,7 @@ export class WorldSystem {
   startLevel(number) {
     const level = createLevel(number);
     this.progression.setCurrentLevel(number);
-    clearEnemies();
+    this.encounters.clearEnemies();
     this.level = level;
     this.completed = false;
     this.elapsed = 0;
@@ -88,7 +73,7 @@ export class WorldSystem {
     this.player.physics.gravity = level.gravity;
     this.player.setInvulnerable(900);
     this.events.emit('level.started', { level: number, world: level.world.id });
-    spawnEnemies({
+    this.encounters.spawnEnemies({
       level: number,
       difficulty: this.progression.difficulty,
       platforms: level.platforms.filter(platform => platform.oneWay)
@@ -131,12 +116,12 @@ export class WorldSystem {
       gravity: level.gravity,
       bounds: { w: level.width, h: level.height }
     };
-    updateEnemies(dt, world);
-    if (level.boss) updateBoss(dt, world);
+    this.encounters.updateEnemies(dt, world);
+    if (level.boss) this.encounters.updateBoss(dt, world);
 
     // Enemies are solid obstacles: stop horizontal player movement at their sides.
     // Stomped/dead enemies and upward bounce motion are intentionally not blocked.
-    for (const enemy of getEnemiesForCollision()) {
+    for (const enemy of this.encounters.getEnemiesForCollision()) {
       if (enemy.dead || !intersects(this.playerCombatant.getBounds(), { x: enemy.x, y: enemy.y, w: enemy.w, h: enemy.h })) continue;
       if (this.player.vy < 0) continue;
       const playerRight = this.player.x + this.player.width;
@@ -163,7 +148,7 @@ export class WorldSystem {
       else if (item.type === 'checkpoint') this.checkpoints.activateCheckpoint({ id: item.id, x: item.x, y: item.y - this.player.height, level: level.number });
     }
 
-    const boss = level.boss && this.bossEncounterStarted ? getBoss(level.boss.world) : null;
+    const boss = level.boss && this.bossEncounterStarted ? this.encounters.getBoss(level.boss.world) : null;
     const exit = level.exit;
     const atExit = intersects(this.playerCombatant.getBounds(), exit);
     if (atExit && (!level.boss || boss?.defeatEventSent)) this.#completeLevel(level.boss?.id ?? null);
@@ -206,7 +191,7 @@ export class WorldSystem {
       cameraX: this.cameraX,
       completed: this.completed,
       collectibles: this.level.collectibles.map(item => ({ id: item.id, collected: Boolean(item.collected) })),
-      encounter: serializeEncounter()
+      encounter: this.encounters.serializeEncounter()
     };
   }
 
@@ -233,7 +218,7 @@ export class WorldSystem {
     for (const item of this.level.collectibles) {
       if (collected.has(item.id)) item.collected = collected.get(item.id) === true;
     }
-    restoreEncounter(snapshot.encounter);
+    this.encounters.restoreEncounter(snapshot.encounter);
     this.bossEncounterStarted = Boolean(this.level.boss && snapshot.encounter.bosses.some(boss => boss.world === this.level.boss.world));
     if (snapshot.encounter.bosses.length && !this.bossEncounterStarted) {
       throw new TypeError('Saved boss encounter does not match the active level');
@@ -252,12 +237,12 @@ export class WorldSystem {
     this.state.status = 'menu';
     this.state.gameplay.paused = true;
     this.level = null;
-    clearEnemies();
+    this.encounters.clearEnemies();
   }
 
   dispose() {
     for (const unsubscribe of this.unsubscribers) unsubscribe?.();
     this.combat.dispose();
-    clearEnemies();
+    this.encounters.clearEnemies();
   }
 }
