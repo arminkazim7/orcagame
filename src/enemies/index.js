@@ -473,28 +473,51 @@ function serializeEncounter() {
 
 /** Restore a previously validated encounter snapshot after the target level is spawned. */
 function validateEncounterSnapshot(snapshot) {
-  if (!snapshot || snapshot.schemaVersion !== 1 || !Array.isArray(snapshot.enemies) || !Array.isArray(snapshot.projectiles) ||
-      !Array.isArray(snapshot.particles) || !Array.isArray(snapshot.bosses)) {
-    throw new TypeError('Invalid encounter snapshot');
-  }
+  if (!snapshot || snapshot.schemaVersion !== 1 || !Array.isArray(snapshot.enemies) ||
+      !Array.isArray(snapshot.projectiles) || !Array.isArray(snapshot.particles) ||
+      !Array.isArray(snapshot.bosses)) throw new TypeError('Invalid encounter snapshot');
   if (snapshot.enemies.length > 250 || snapshot.projectiles.length > 500 ||
       snapshot.particles.length > 1000 || snapshot.bosses.length > 1) {
     throw new RangeError('Encounter snapshot exceeds entity limits');
   }
-  const finite = value => Number.isFinite(value);
+  const finite = value => typeof value === 'number' && Number.isFinite(value);
+  const ids = [];
   for (const enemy of snapshot.enemies) {
-    if (!enemy || !['walker','flyer','shooter'].includes(enemy.type) ||
-        !['x','y','vx','vy','w','h','hp','speed','dir'].every(key => finite(enemy[key]))) {
+    if (!enemy || !Number.isSafeInteger(enemy.id) || enemy.id < 0 ||
+        !['walker','flyer','shooter'].includes(enemy.type) ||
+        !['x','y','vx','vy','w','h','hp','speed','dir'].every(key => finite(enemy[key])) ||
+        typeof enemy.dead !== 'boolean' || !['easy','hard'].includes(enemy.difficultyKey) ||
+        typeof enemy.palette !== 'string' ||
+        !['patrolMin','patrolMax'].every(key => finite(enemy[key])) ||
+        (enemy.type === 'flyer' && !['hoverAmp','hoverFreq'].every(key => finite(enemy[key]))) ||
+        (enemy.type === 'shooter' && !['fireCooldown','fireTimer','range'].every(key => finite(enemy[key])))) {
       throw new TypeError('Encounter contains an invalid enemy');
     }
+    ids.push(enemy.id);
   }
   for (const projectile of snapshot.projectiles) {
-    if (!projectile || !['x','y','vx','vy','radius','ttl','damage'].every(key => finite(projectile[key])) ||
-        !['player','enemy'].includes(projectile.owner)) throw new TypeError('Encounter contains an invalid projectile');
+    if (!projectile || !Number.isSafeInteger(projectile.id) || projectile.id < 0 ||
+        !['x','y','vx','vy','radius','ttl','damage','gravity'].every(key => finite(projectile[key])) ||
+        !['player','enemy'].includes(projectile.owner) || typeof projectile.color !== 'string') {
+      throw new TypeError('Encounter contains an invalid projectile');
+    }
+    ids.push(projectile.id);
+  }
+  if (new Set(ids).size !== ids.length) throw new TypeError('Encounter entity IDs must be unique');
+  for (const particle of snapshot.particles) {
+    if (!particle || !['x','y','vx','vy','life','maxLife','size'].every(key => finite(particle[key])) ||
+        typeof particle.color !== 'string') throw new TypeError('Encounter contains an invalid particle');
   }
   for (const boss of snapshot.bosses) {
     if (!boss || !Number.isInteger(boss.world) || !BOSS_DEFS[boss.world] ||
-        !['x','y','vx','vy','health','maxHealth','attackTimer','defeatTimer'].every(key => finite(boss[key]))) {
+        boss.id !== `boss-w${boss.world}` || !boss.arena ||
+        !['x','y','w','h'].every(key => finite(boss.arena[key])) ||
+        !['x','y','vx','vy','health','maxHealth','attackTimer','defeatTimer','dir','w','h','teleportCooldown','minionsSpawned','hitFlash'].every(key => finite(boss[key])) ||
+        !['easy','hard'].includes(boss.difficultyKey) || ![1,2].includes(boss.phase) ||
+        typeof boss.defeated !== 'boolean' ||
+        (boss.defeatEventSent !== undefined && typeof boss.defeatEventSent !== 'boolean') ||
+        (boss.dashState !== null && boss.dashState !== undefined &&
+          (!['telegraph','dashing'].includes(boss.dashState.phase) || !finite(boss.dashState.timer)))) {
       throw new TypeError('Encounter contains an invalid boss');
     }
   }
