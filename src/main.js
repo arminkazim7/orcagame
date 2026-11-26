@@ -122,6 +122,8 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
   systems.push(world);
   function frame(timestamp) {
     if (!running) return;
+    // Schedule first so a throwing system cannot silently kill the loop (and freeze all input).
+    raf = requestAnimationFrame(frame);
     const dt = previous === null ? 0 : Math.min((timestamp - previous) / 1000, 1 / 15); previous = timestamp;
     if (!state.gameplay.paused) {
       state.gameplay.elapsedSeconds += dt;
@@ -133,7 +135,6 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
       for (const system of systems) system.render?.(ctx, state, bus, input);
       if (!systems.some(s => s.render)) player.render(ctx, state.gameplay.cameraX);
     }
-    raf = requestAnimationFrame(frame);
   }
   return {
     config: GAME_CONFIG, state, events: bus, player, profile: playerProfile, checkpoints, powerUps, lives, score, progression, saves, audio, ui, input, world,

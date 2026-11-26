@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   spawnEnemies, updateEnemies, spawnBoss, damageBoss, damageEnemy,
-  updateBoss, isBossDefeated, clearEnemies, events, configure, _getState,
+  updateBoss, isBossDefeated, clearEnemies, events, configure, _getState, renderEnemies,
 } from '../../src/enemies/index.js';
 
 function fakePlayer(props = {}) {
@@ -176,3 +176,18 @@ test('clearEnemies resets everything', () => {
 
 
 test('regular enemy contact damage is active for walker, flyer, and shooter types',()=>{clearEnemies();configure({contactGrace:0});for(const type of ['walker','flyer','shooter']){const [e]=spawnEnemies({level:6,difficulty:'easy',platforms:[{x:0,y:400,w:600,h:20}],rng:()=>0});e.type=type;e.x=200;e.y=300;e.speed=0;e.vy=0;e.touchCooldown=0;const hits=[];const off=events.on('player:damaged',d=>hits.push(d));updateEnemies(0.016,world({player:fakePlayer({x:e.x,y:e.y,w:e.w,h:e.h})}));off?.();assert.ok(hits.some(d=>d.enemyType===type),type+' contact damage expected');clearEnemies();}});
+
+test('renderEnemies draws without a camera argument and with a boss health bar', () => {
+  clearEnemies();
+  const calls = [];
+  const ctx = new Proxy({ canvas: { width: 960, height: 540 } }, {
+    get: (t, k) => (k in t ? t[k] : (...a) => { calls.push(k); }),
+    set: (t, k, v) => { t[k] = v; return true; }
+  });
+  spawnEnemies({ level: 1, difficulty: 'easy', platforms: [{ x: 0, y: 400, w: 600, h: 20 }], rng: () => 0 });
+  spawnBoss({ world: 1, difficulty: 'easy', arena: { x: 0, y: 400, w: 800, h: 400 } });
+  assert.doesNotThrow(() => renderEnemies(ctx));
+  assert.doesNotThrow(() => renderEnemies(ctx, { x: 120, y: 30 }));
+  assert.ok(calls.includes('fillText'), 'boss health bar label drawn');
+  clearEnemies();
+});

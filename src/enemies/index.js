@@ -374,9 +374,8 @@ function updateParticles(dt) {
 // ---------------------------------------------------------------------------
 
 /** Render enemies, projectiles, particles, and the boss + its health bar. */
-export function renderEnemies(g) {
+export function renderEnemies(g, camera = { x: 0, y: 0 }) {
   if (!g) return;
-  const ox = camera.x, oy = camera.y;
 
   // Particles
   for (const pt of state.particles) {
