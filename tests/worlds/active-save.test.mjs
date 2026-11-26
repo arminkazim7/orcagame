@@ -7,6 +7,8 @@ test('portable save restores active level, player position, collectibles and bos
   try {
     game.progression.unlockAllLevels();
     const level = game.startLevel(3);
+    game.player.x = level.boss.arena.x;
+    game.world.update(1 / 60, game.state, game.events, {});
     level.collectibles[0].collected = true;
     game.player.x = 1777;
     game.player.y = 245;
