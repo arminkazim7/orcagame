@@ -244,6 +244,9 @@ export class WorldSystem {
     this.state.gameplay.cameraX = this.cameraX;
     this.state.gameplay.paused = false;
     this.player.physics.gravity = level.gravity;
+    this.player.alive = true;
+    this.player.invulnerabilityMs = 0;
+    this.player.shootWasDown = false;
     this.player.projectiles?.clear?.();
     this.encounters.restoreEncounter(snapshot.encounter);
     return true;
