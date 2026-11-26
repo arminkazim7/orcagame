@@ -308,10 +308,10 @@ test('all-lives recovery places player safely on start floor and pauses for reco
   const game = createGameRuntime({ audioEnabled: false });
   try {
     const level = game.startLevel(4);
-    game.lives.loseLife({reason:'test'});
-    game.lives.loseLife({reason:'test'});
-    const result = game.lives.loseLife({reason:'test', levelStart:level.start});
-    assert.equal(result.recovered, true);
+    game.events.emit('player.damaged', {amount:1, source:'test', applied:true});
+    game.events.emit('player.damaged', {amount:1, source:'test', applied:true});
+    game.events.emit('player.damaged', {amount:1, source:'test', applied:true});
+    assert.equal(game.lives.getLives(), 3, 'last life loss should recover to starting lives');
     assert.equal(game.state.gameplay.paused, true);
     assert.equal(game.player.x, level.start.x);
     const floor = level.platforms.find(p => !p.oneWay && level.start.x + game.player.width > p.x && level.start.x < p.x + p.w);
