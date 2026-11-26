@@ -11,12 +11,16 @@ const ENCOUNTER_FIELDS = {
   boss: ['id','world','arena','x','y','vx','vy','dir','w','h','health','maxHealth','attackTimer','dashState','teleportCooldown','minionsSpawned','phase','defeated','defeatTimer','hitFlash','difficultyKey','defeatEventSent','attackCount']
 };
 function migrateEncounter(snapshot) {
-  if (!isObject(snapshot) || snapshot.schemaVersion === 1) return;
+  if (!isObject(snapshot) || snapshot.schemaVersion === 2) return;
   const pick = (value, keys) => Object.fromEntries(keys.filter(key => value?.[key] !== undefined).map(key => [key, value[key]]));
   for (const [field, type] of [['enemies','enemy'],['projectiles','projectile'],['particles','particle'],['bosses','boss']]) {
     if (Array.isArray(snapshot[field])) snapshot[field] = snapshot[field].map(value => pick(value, ENCOUNTER_FIELDS[type]));
   }
-  snapshot.schemaVersion = 1;
+  if (snapshot.schemaVersion === 1 && Number.isInteger(snapshot.activeBossWorld)) {
+    snapshot.activeBossId = `boss-w${snapshot.activeBossWorld}`;
+    delete snapshot.activeBossWorld;
+  }
+  snapshot.schemaVersion = 2;
 }
 
 
