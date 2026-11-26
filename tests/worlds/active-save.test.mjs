@@ -14,6 +14,9 @@ test('portable save restores active level, player position, collectibles and bos
     game.world.encounters.damageBoss(1, 7);
     const savedBossHealth = game.world.encounters.getBoss(1).health;
     const save = game.saves.createSave();
+    const replayed = [];
+    const offLevel = game.events.on('level.started', event => replayed.push(['level.started', event]));
+    const offBoss = game.events.on('boss.started', event => replayed.push(['boss.started', event]));
 
     game.startLevel(1);
     game.player.x = 100;
@@ -26,6 +29,8 @@ test('portable save restores active level, player position, collectibles and bos
     assert.equal(game.player.vx, 31);
     assert.equal(game.world.level.collectibles[0].collected, true);
     assert.equal(game.world.encounters.getBoss(1).health, savedBossHealth);
+    assert.deepEqual(replayed, [], 'restoration must not replay level or boss start events');
+    offLevel(); offBoss();
   } finally {
     game.dispose();
    
@@ -59,7 +64,7 @@ test('portable save preserves paused state and clamps restored camera', async ()
     save.gameplayState.world.cameraX = 999999;
     const result = await game.saves.loadSave(JSON.stringify(save));
     assert.equal(result.loaded, true, result.errors?.join('; '));
-    assert.equal(game.state.gameplay.paused, true);
+    assert.equal(game.state.gameplay.paused, false, 'restored games always resume unpaused');
     assert.ok(game.world.cameraX >= 0);
     assert.ok(game.world.cameraX <= Math.max(0, game.world.level.width - 960));
   } finally {
@@ -139,4 +144,19 @@ test('boss-level save before arena entry restores without starting the encounter
     assert.equal(result.loaded, true, result.errors?.join('; '));
     assert.equal(game.world.encounters.getBoss(1), null);
   } finally { game.dispose(); }
+});
+
+
+test('loading an active level does not require it to be unlocked in the destination runtime', async () => {
+  const source = createGameRuntime({ audioEnabled: false });
+  const target = createGameRuntime({ audioEnabled: false });
+  try {
+    source.progression.unlockAllLevels();
+    source.startLevel(3);
+    const save = source.saves.createSave();
+    assert.deepEqual(target.progression.unlockedLevels, [1]);
+    const result = await target.saves.loadSave(JSON.stringify(save));
+    assert.equal(result.loaded, true, result.errors?.join('; '));
+    assert.equal(target.world.level.number, 3);
+  } finally { source.dispose(); target.dispose(); }
 });
