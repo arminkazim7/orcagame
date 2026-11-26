@@ -227,6 +227,12 @@ export class WorldSystem {
       this.encounters.clearEnemies();
       this.completed = false;
       this.bossEncounterStarted = false;
+      this.elapsed = 0;
+      this.cameraX = 0;
+      this.cameraY = 0;
+      this.state.status = 'menu';
+      this.state.gameplay.elapsedSeconds = 0;
+      this.state.gameplay.cameraX = 0;
       return true;
     }
     this.validateSnapshot(snapshot);
