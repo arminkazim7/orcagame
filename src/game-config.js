@@ -2,7 +2,7 @@
 export const GAME_CONFIG = Object.freeze({
   title: 'Orca Adventure', version: '0.1.0', stateVersion: 1,
   canvas: Object.freeze({ width: 960, height: 540, background: '#063b58' }),
-  physics: Object.freeze({ gravity: 1550, worldWidth: 4800, groundY: 480 }),
+  physics: Object.freeze({ gravity: 1550, worldWidth: 4800, worldHeight: 840, groundY: 480 }),
   progression: Object.freeze({ totalLevels: 15, startingLives: 3, scoreLifeThreshold: 10000, orcalordRequiresAllHard: true }),
   worlds: Object.freeze([
     Object.freeze({ id: 'coral-coast', name: 'Coral Coast', levels: [1,2,3], bossId: 'coral-warden', palette: ['#0b7189','#43c6ac'] }),
