@@ -1,4 +1,5 @@
 import { createLevel } from './levels.js';
+import { GAME_CONFIG } from '../game-config.js';
 import { LevelRenderer } from './LevelRenderer.js';
 import { CombatResolver } from './CombatResolver.js';
 import { EncounterSystem } from '../enemies/index.js';
@@ -22,6 +23,7 @@ export class WorldSystem {
     this.profile = profile;
     this.ui = ui;
     this.level = null;
+    this.collectibleState = new Set();
     this.cameraX = 0;
     this.cameraY = 0;
     this.completed = false;
@@ -53,6 +55,7 @@ export class WorldSystem {
     this.progression.setCurrentLevel(number);
     this.encounters.clearEnemies();
     this.level = level;
+    this.collectibleState = new Set();
     this.completed = false;
     this.bossEncounterStarted = false;
     this.elapsed = 0;
@@ -100,10 +103,10 @@ export class WorldSystem {
       projectileBounds: { left: 0, right: level.width }
     });
     this.player.x = Math.max(0, Math.min(level.width - this.player.width, this.player.x));
-    this.cameraX = Math.max(0, Math.min(level.width - (this.canvas?.width ?? 960),
-      this.player.x - (this.canvas?.width ?? 960) * 0.36));
+    this.cameraX = Math.max(0, Math.min(level.width - GAME_CONFIG.canvas.width,
+      this.player.x - GAME_CONFIG.canvas.width * 0.36));
     state.gameplay.cameraX = this.cameraX;
-    this.cameraY = Math.max(0, Math.min(level.height - (this.canvas?.height ?? 540), this.player.y - (this.canvas?.height ?? 540) * 0.38));
+    this.cameraY = Math.max(0, Math.min(level.height - GAME_CONFIG.canvas.height, this.player.y - GAME_CONFIG.canvas.height * 0.38));
 
     // The boss encounter begins only when the player reaches the arena boundary.
     // Until then the boss does not exist and cannot patrol or attack from off-screen.
@@ -169,10 +172,10 @@ export class WorldSystem {
 
 
     for (const item of level.collectibles) {
-      if (item.collected) continue;
+      if (this.collectibleState.has(item.id)) continue;
       const bounds = { x: item.x, y: item.y, w: 30, h: 30 };
       if (!intersects(this.playerCombatant.getBounds(), bounds)) continue;
-      item.collected = true;
+      this.collectibleState.add(item.id);
       if (item.type === 'badge') {
         const badges = this.profile?.badges ?? [];
         if (!badges.includes(item.badgeId)) { badges.push(item.badgeId); this.events.emit('badge.collected', { level: level.number, badgeId: item.badgeId }); }
@@ -223,7 +226,7 @@ export class WorldSystem {
       elapsed: this.elapsed,
       cameraX: this.cameraX,
       completed: this.completed,
-      collectibles: this.level.collectibles.map(item => ({ id: item.id, collected: Boolean(item.collected) })),
+      collectibles: this.level.collectibles.map(item => ({ id: item.id, collected: this.collectibleState.has(item.id) })),
       encounter: this.encounters.serializeEncounter()
     };
   }
@@ -257,6 +260,7 @@ export class WorldSystem {
   restore(snapshot) {
     if (snapshot == null) {
       this.level = null;
+      this.collectibleState.clear();
       this.encounters.clearEnemies();
       this.completed = false;
       this.bossEncounterStarted = false;
@@ -271,10 +275,10 @@ export class WorldSystem {
     this.validateSnapshot(snapshot);
     const level = createLevel(snapshot.level);
     const collected = new Map(snapshot.collectibles.map(item => [item.id, item.collected]));
-    for (const item of level.collectibles) item.collected = collected.get(item.id);
+    this.collectibleState = new Set([...collected].filter(([,isCollected]) => isCollected).map(([id]) => id));
     this.level = level;
     this.elapsed = snapshot.elapsed;
-    this.cameraX = Math.max(0, Math.min(level.width - (this.canvas?.width ?? 960), snapshot.cameraX));
+    this.cameraX = Math.max(0, Math.min(level.width - GAME_CONFIG.canvas.width, snapshot.cameraX));
     this.cameraY = 0;
     this.completed = snapshot.completed;
     this.bossEncounterStarted = Boolean(level.boss && snapshot.encounter.bosses.some(boss => boss.id === level.boss.id));
