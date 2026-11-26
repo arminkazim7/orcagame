@@ -124,3 +124,20 @@ test('stopping music clears active and pending playback', async () => {
   assert.equal(audio.scheduler, null);
   await audio.dispose();
 });
+
+
+test('boss-5 F5 melody note is defined and bass lines stay in the bass register', async () => {
+  const audio = makeAudio();
+  await audio.unlockAudio();
+  audio.playBossMusic('abyss-emperor');
+  const frequencies = audio.context.nodes
+    .filter(node => node.frequency.value > 0)
+    .map(node => node.frequency.value);
+  assert.ok(frequencies.includes(698.46), 'boss-5 opening phrase schedules F5');
+  const bassOscillators = audio.context.nodes.filter(node =>
+    node.type === 'triangle' && node.frequency.value > 0);
+  assert.ok(bassOscillators.length > 0);
+  assert.ok(bassOscillators.every(node => node.frequency.value <= 220),
+    'bass notes should not occupy the mid-range');
+  await audio.dispose();
+});
