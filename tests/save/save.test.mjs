@@ -119,3 +119,23 @@ test('downloadSave keeps the object URL alive until after the browser handles th
 });
 
 test('badge collection persists through portable save/load and validates',async()=>{const src=makeHarness();src.profile.badges=[2,5,15];const save=src.save.createSave();assert.deepEqual(save.player.badges,[2,5,15]);const dest=makeHarness();const result=await dest.save.loadSave(JSON.stringify(save));assert.equal(result.loaded,true);assert.deepEqual(dest.profile.badges,[2,5,15]);const invalid=dest.save.createSave();invalid.player.badges=[1,1];assert.equal(dest.save.validateSave(invalid).valid,false);});
+
+
+test('restorePlayer ignores unlisted properties and cannot replace the player prototype', () => {
+  const h = makeHarness();
+  const originalPrototype = Object.getPrototypeOf(h.player);
+  const data = h.save.createSave();
+  data.gameplayState.player.sizeScale = 50;
+  data.gameplayState.player.invulnerabilityMs = 999999;
+  data.gameplayState.player.__proto__ = { injected: true };
+  // JSON round-tripping creates an own "__proto__" data property, as an imported save does.
+  const imported = JSON.parse(JSON.stringify(data));
+  const result = h.save.applySave(imported);
+  assert.equal(result.applied, true);
+  assert.equal(h.player.sizeScale, undefined);
+  assert.equal(h.player.invulnerabilityMs, undefined);
+  assert.equal(h.player.injected, undefined);
+  assert.equal(Object.getPrototypeOf(h.player), originalPrototype);
+  assert.equal(Object.hasOwn(h.player, '__proto__'), false);
+  assert.equal(h.player.x, 120);
+});
