@@ -76,3 +76,26 @@ test('composition root owns UI lifecycle when uiRoot is provided', () => {
   game.dispose();
   assert.equal(listeners.size, 0, 'dispose removes UI listeners');
 });
+
+test('gameplay keyboard controls remain active when a UI button keeps focus', () => {
+  const listeners = new Map();
+  const previousWindow = globalThis.window;
+  globalThis.window = { addEventListener:(name,handler)=>listeners.set(name,handler), removeEventListener:name=>listeners.delete(name) };
+  const root = { innerHTML:'', replaceChildren(){this.innerHTML='';}, querySelector(){return null;}, addEventListener(){}, removeEventListener(){}, insertAdjacentHTML(_p,html){this.innerHTML+=html;} };
+  const game = createGameRuntime({ uiRoot:root, audioEnabled:false });
+  try {
+    game.progression.unlockAllLevels();
+    game.startLevel(1);
+    const focusedButton = { closest:()=>null };
+    listeners.get('keydown')({ code:'ArrowRight', target:focusedButton, preventDefault(){} });
+    assert.equal(game.input.isDown('right'),true);
+    listeners.get('keyup')({ code:'ArrowRight', target:focusedButton });
+    listeners.get('keydown')({ code:'KeyX', target:focusedButton, preventDefault(){} });
+    assert.equal(game.input.isDown('shoot'),true);
+    listeners.get('keyup')({ code:'KeyX', target:focusedButton });
+    assert.equal(game.input.isDown('shoot'),false);
+  } finally {
+    game.dispose();
+    if(previousWindow===undefined) delete globalThis.window; else globalThis.window=previousWindow;
+  }
+});
