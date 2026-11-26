@@ -24,6 +24,7 @@ export class WorldSystem {
     this.ui = ui;
     this.level = null;
     this.cameraX = 0;
+    this.cameraY = 0;
     this.completed = false;
     this.elapsed = 0;
     this.hudElapsed = 0;
@@ -74,6 +75,7 @@ export class WorldSystem {
     this.completed = false;
     this.elapsed = 0;
     this.cameraX = 0;
+    this.cameraY = 0;
     this.state.status = 'playing';
     this.state.gameplay.paused = false;
     this.state.gameplay.elapsedSeconds = 0;
@@ -119,6 +121,7 @@ export class WorldSystem {
     this.cameraX = Math.max(0, Math.min(level.width - (this.canvas?.width ?? 960),
       this.player.x - (this.canvas?.width ?? 960) * 0.36));
     state.gameplay.cameraX = this.cameraX;
+    this.cameraY = Math.max(0, Math.min(level.height - (this.canvas?.height ?? 540), this.player.y - (this.canvas?.height ?? 540) * 0.38));
 
     const world = {
       player: this.playerCombatant,
@@ -254,7 +257,7 @@ export class WorldSystem {
 
     // Underwater light shafts and bubbles provide depth without obscuring play.
     for (let i = 0; i < 12; i++) {
-      const x = ((i * 173 - this.cameraX * 0.18) % (ctx.canvas.width + 100) + ctx.canvas.width + 100) % (ctx.canvas.width + 100);
+      const x = ((i * 173 - this.cameraX * 0.18 - this.cameraY * 0.08) % (ctx.canvas.width + 100) + ctx.canvas.width + 100) % (ctx.canvas.width + 100);
       ctx.fillStyle = 'rgba(210,245,255,0.045)';
       ctx.fillRect(x, 0, 22, ctx.canvas.height);
       ctx.strokeStyle = 'rgba(210,245,255,0.22)';
@@ -264,7 +267,7 @@ export class WorldSystem {
     }
 
     ctx.save();
-    ctx.translate(-this.cameraX, 0);
+    ctx.translate(-this.cameraX, -this.cameraY);
     for (const platform of level.platforms) {
       if (platform.id === 'seafloor') {
         ctx.fillStyle = '#143d48';
@@ -292,9 +295,9 @@ export class WorldSystem {
       else if(item.type==='life'){ctx.fillStyle='#ffe36b';ctx.strokeStyle='#fff5bc';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-12);ctx.lineTo(11,0);ctx.lineTo(0,12);ctx.lineTo(-11,0);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('+',0,0);}
       else{ctx.fillStyle='#fff';ctx.strokeStyle='#75f4d2';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,10,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#087baf';ctx.fillRect(-3,-7,6,14);}ctx.restore();
     }
+    this.player.render(ctx);
+    renderEnemies(ctx, { x: this.cameraX, y: this.cameraY });
     ctx.restore();
-    this.player.render(ctx, this.cameraX);
-    renderEnemies(ctx, { x: this.cameraX, y: 0 });
   }
 
   stop() {
