@@ -63,14 +63,20 @@ export class WorldSystem {
     this.state.gameplay.cameraX = 0;
     this.checkpoints.clear();
     this.lives.levelStart = { ...level.start };
+    this.player.sizeScale = 1;
+    this.player.jumpScale = 1;
+    this.player.activePowerUp = null;
+    this.player.protectionHits = 0;
+    this.player.physics.resetTransientState?.();
     this.player.x = level.start.x;
-    this.player.y = level.start.y;
+    this.player.y = level.start.y - (this.player.height - 43);
     this.player.vx = 0;
     this.player.vy = 0;
     this.player.grounded = false;
     this.player.alive = true;
     this.player.projectiles.clear();
     this.player.physics.gravity = level.gravity;
+    this.player.physics.resetTransientState?.();
     this.player.setInvulnerable(900);
     this.events.emit('level.started', { level: number, world: level.world.id });
     this.encounters.spawnEnemies({
@@ -251,7 +257,13 @@ export class WorldSystem {
     this.state.gameplay.cameraX = this.cameraX;
     this.state.gameplay.paused = false;
     this.player.physics.gravity = level.gravity;
+    this.player.physics.resetTransientState?.();
     this.player.alive = true;
+    this.player.x = Math.max(0, Math.min(level.width - this.player.width, this.player.x));
+    this.player.y = Math.min(this.player.y, GAME_GROUND_Y - this.player.height);
+    this.player.vx = 0;
+    this.player.vy = 0;
+    this.player.grounded = false;
     this.player.invulnerabilityMs = 0;
     this.player.shootWasDown = false;
     this.player.projectiles?.clear?.();
