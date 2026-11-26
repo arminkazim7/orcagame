@@ -518,6 +518,9 @@ export function restoreEncounter(snapshot) {
   return true;
 }
 
+/** Read-only enemy list used by world collision resolution. */
+export function getEnemiesForCollision() { return state.enemies; }
+
 /** Test/debug accessor. */
 export function _getState() {
   return state;
