@@ -114,7 +114,7 @@ test('stomp defeats a grounded enemy and emits enemy:stomped', () => {
   clearEnemies();
   configure({ stompEnabled: true, contactGrace: 0 });
   const stomps = [];
-  events.on('enemy:stomped', stomps.push.bind(stomps));
+  events.on('enemy.stomped', stomps.push.bind(stomps));
   const [e] = spawnEnemies({ level: 1, difficulty: 'easy', platforms: [{ x: 0, y: 400, w: 600, h: 20 }], rng: () => 0 });
   const w = world({ player: fakePlayer({ x: e.x, y: e.y - 20, w: 20, h: 30, vy: 300 }) });
   updateEnemies(0.016, w);
@@ -125,9 +125,9 @@ test('stomp defeats a grounded enemy and emits enemy:stomped', () => {
 test('boss takes player-projectile damage and full defeat flow works', () => {
   clearEnemies();
   const damaging = [], defeating = [], defeated = [];
-  events.on('boss:damaged', damaging.push.bind(damaging));
-  events.on('boss:defeating', defeating.push.bind(defeating));
-  events.on('boss:defeated', defeated.push.bind(defeated));
+  events.on('boss.damaged', damaging.push.bind(damaging));
+  events.on('boss.defeating', defeating.push.bind(defeating));
+  events.on('boss.defeated', defeated.push.bind(defeated));
 
   const boss = spawnBoss({ world: 1, difficulty: 'easy', arena: { x: 0, y: 400, w: 800, h: 400 } });
   const maxHp = boss.maxHealth;
