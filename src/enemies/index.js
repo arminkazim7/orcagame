@@ -468,7 +468,7 @@ function serializeEncounter() {
 }
 
 /** Restore a previously validated encounter snapshot after the target level is spawned. */
-function restoreEncounter(snapshot) {
+function validateEncounterSnapshot(snapshot) {
   if (!snapshot || !Array.isArray(snapshot.enemies) || !Array.isArray(snapshot.projectiles) ||
       !Array.isArray(snapshot.particles) || !Array.isArray(snapshot.bosses)) {
     throw new TypeError('Invalid encounter snapshot');
@@ -494,6 +494,15 @@ function restoreEncounter(snapshot) {
       throw new TypeError('Encounter contains an invalid boss');
     }
   }
+  if (snapshot.activeBossWorld !== null && snapshot.activeBossWorld !== undefined &&
+      (!Number.isInteger(snapshot.activeBossWorld) || !snapshot.bosses.some(boss => boss.world === snapshot.activeBossWorld))) {
+    throw new TypeError('Encounter active boss reference is invalid');
+  }
+  return true;
+}
+
+function restoreEncounter(snapshot) {
+  validateEncounterSnapshot(snapshot);
   state.enemies = JSON.parse(JSON.stringify(snapshot.enemies));
   state.projectiles = JSON.parse(JSON.stringify(snapshot.projectiles));
   state.particles = JSON.parse(JSON.stringify(snapshot.particles));
@@ -511,6 +520,6 @@ function restoreEncounter(snapshot) {
 function getEnemiesForCollision() { return state.enemies; }
 
 
-    Object.assign(this, { configure, spawnEnemies, updateEnemies, damageEnemy, spawnBoss, damageBoss, updateBoss, isBossDefeated, getBoss, renderEnemies, clearEnemies, serializeEncounter, restoreEncounter, getEnemiesForCollision });
+    Object.assign(this, { configure, spawnEnemies, updateEnemies, damageEnemy, spawnBoss, damageBoss, updateBoss, isBossDefeated, getBoss, renderEnemies, clearEnemies, serializeEncounter, validateEncounterSnapshot, restoreEncounter, getEnemiesForCollision });
   }
 }
