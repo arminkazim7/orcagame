@@ -34,9 +34,9 @@ export class Projectiles {
     this.items = this.items.filter(p => p.alive);
   }
 
-  render(ctx, cameraX = 0) {
+  render(ctx) {
     for (const p of this.items) {
-      const x = p.x - cameraX;
+      const x = p.x;
       ctx.save();
       ctx.shadowColor = '#8ff7ff';
       ctx.shadowBlur = 12;
