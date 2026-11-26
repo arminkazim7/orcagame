@@ -159,8 +159,8 @@ test('life state round-trips the persistent death count', () => {
 
 
 test('canonical boss IDs unlock and defeat tracking match spawned boss IDs', () => {
-  const bossIds = ['boss-w1','boss-w2','boss-w3','boss-w4','boss-w5'];
-  const unlocks = {3:['boss-w1'],6:['boss-w2'],9:['boss-w3'],12:['boss-w4'],15:['boss-w5']};
+  const bossIds = ['coral-warden','ruin-colossus','abyss-emperor','kelp-guardian','ice-leviathan'];
+  const unlocks = {3:['coral-warden'],6:['ruin-colossus'],9:['abyss-emperor'],12:['kelp-guardian'],15:['ice-leviathan']};
   const p = new ProgressionManager({totalLevels:15,bossUnlocks:unlocks});
   for (const [level,id] of Object.entries(unlocks)) {
     p.completeLevel({level:Number(level),bossId:id[0]});
