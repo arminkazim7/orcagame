@@ -110,7 +110,7 @@ export class WorldSystem {
     if (level.boss && !this.bossEncounterStarted &&
         this.player.x + this.player.width >= level.boss.arena.x) {
       this.encounters.spawnBoss({
-        world: level.boss.world,
+        bossId: level.boss.id,
         difficulty: this.progression.difficulty,
         arena: level.boss.arena
       });
@@ -181,7 +181,7 @@ export class WorldSystem {
       else if (item.type === 'checkpoint') this.checkpoints.activateCheckpoint({ id: item.id, x: item.x, y: item.y - this.player.height, level: level.number });
     }
 
-    const boss = level.boss && this.bossEncounterStarted ? this.encounters.getBoss(level.boss.world) : null;
+    const boss = level.boss && this.bossEncounterStarted ? this.encounters.getBoss(level.boss.id) : null;
     const exit = level.exit;
     const atExit = intersects(this.playerCombatant.getBounds(), exit);
     if (atExit && (!level.boss || boss?.defeatEventSent)) this.#completeLevel(level.boss?.id ?? null);
@@ -246,9 +246,9 @@ export class WorldSystem {
     }
     this.encounters.validateEncounterSnapshot(snapshot.encounter);
     const bosses = snapshot.encounter.bosses;
-    if (bosses.length > 1 || bosses.some(boss => !expected.boss || boss.world !== expected.boss.world) ||
-        (bosses.length > 0 && snapshot.encounter.activeBossWorld !== bosses[0].world) ||
-        (snapshot.encounter.activeBossWorld != null && snapshot.encounter.activeBossWorld !== expected.boss?.world)) {
+    if (bosses.length > 1 || bosses.some(boss => !expected.boss || boss.id !== expected.boss.id) ||
+        (bosses.length > 0 && snapshot.encounter.activeBossId !== bosses[0].id) ||
+        (snapshot.encounter.activeBossId != null && snapshot.encounter.activeBossId !== expected.boss?.id)) {
       throw new TypeError('Saved boss encounter does not match the active level');
     }
     return true;
@@ -277,7 +277,7 @@ export class WorldSystem {
     this.cameraX = Math.max(0, Math.min(level.width - (this.canvas?.width ?? 960), snapshot.cameraX));
     this.cameraY = 0;
     this.completed = snapshot.completed;
-    this.bossEncounterStarted = Boolean(level.boss && snapshot.encounter.bosses.some(boss => boss.world === level.boss.world));
+    this.bossEncounterStarted = Boolean(level.boss && snapshot.encounter.bosses.some(boss => boss.id === level.boss.id));
     this.hudElapsed = 0;
     this.state.status = this.completed ? 'victory' : 'playing';
     this.state.gameplay.elapsedSeconds = this.elapsed;
