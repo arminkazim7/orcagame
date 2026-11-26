@@ -131,3 +131,15 @@ test('raccoon and octopus characters have dedicated animated motion profiles', (
   assert.equal(raccoon.animation.characterType,'octopus');
   assert.throws(()=>new Orca({characterType:'dragon'}),/Unknown character type/);
 });
+
+test('named runtime actions drive movement, jump, shooting and drop-through touch controls', () => {
+  const actions = { left:false, right:false, jump:false, down:false, shoot:false, dropThrough:false,
+    isDown(action) { return this[action] === true; } };
+  const o = new Orca();
+  actions.right = true; step(o, actions, [], 8); assert.ok(o.x > 80, 'right action moves the player');
+  actions.right = false; actions.jump = true; o.grounded = true; step(o, actions, [], 1); assert.ok(o.vy < 0, 'jump action triggers jump');
+  actions.jump = false; actions.shoot = true; step(o, actions, [], 1); assert.equal(o.projectiles.items.length, 1, 'shoot action fires');
+  const drops = []; const d = new Orca({ onEvent:name=>{if(name==='player.dropThrough')drops.push(name);} });
+  const oneWay = [{x:0,y:200,width:300,height:12,oneWay:true}]; d.y=200-d.height; d.grounded=true;
+  actions.shoot=false; actions.dropThrough=true; step(d,actions,oneWay,1); assert.equal(drops.length,1); assert.ok(d.vy>0,'drop-through action passes downward');
+});
