@@ -156,3 +156,17 @@ test('life state round-trips the persistent death count', () => {
   const restored=new LifeManager({player:playerMock(),state:JSON.parse(JSON.stringify(l.serialize()))});
   assert.equal(restored.deathCount,1); assert.equal(restored.getLives(),3);
 });
+
+
+test('canonical boss IDs unlock and defeat tracking match spawned boss IDs', () => {
+  const bossIds = ['boss-w1','boss-w2','boss-w3','boss-w4','boss-w5'];
+  const unlocks = {3:['boss-w1'],6:['boss-w2'],9:['boss-w3'],12:['boss-w4'],15:['boss-w5']};
+  const p = new ProgressionManager({totalLevels:15,bossUnlocks:unlocks});
+  for (const [level,id] of Object.entries(unlocks)) {
+    p.completeLevel({level:Number(level),bossId:id[0]});
+    assert.ok(p.unlockedBosses.includes(id[0]), `boss unlock ${id[0]} at level ${level}`);
+    assert.ok(p.defeatedBosses.includes(id[0]), `boss defeat tracked ${id[0]}`);
+  }
+  assert.deepEqual(p.unlockedBosses,bossIds);
+  assert.deepEqual(p.defeatedBosses,bossIds);
+});
