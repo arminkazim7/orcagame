@@ -107,7 +107,7 @@ export class Orca {
       ctx.fillStyle = 'rgba(150,235,255,.12)'; ctx.fill();
     }
     ctx.restore();
-    this.projectiles.render(ctx, cameraX);
+    this.projectiles.render(ctx);
     ctx.save(); ctx.fillStyle = 'rgba(235,249,255,.9)'; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(this.name, this.centerX, this.y - 8); ctx.restore();
   }
