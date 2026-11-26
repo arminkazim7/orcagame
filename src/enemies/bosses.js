@@ -1,11 +1,7 @@
 import { bossHealthFor } from './difficulty.js';
 import { createProjectile, createParticle } from './entities.js';
 
-/**
- * Five visually distinct bosses, one per world.
- * `easyHealth` is the Easy-mode max HP; Hard is exactly double (enforced in spawnBoss).
- * `pattern` names the unique attack routine handled by runBossPattern().
- */
+/** Canonical boss registry: stable IDs own names, world association and combat behavior. */
 export const BOSS_DEFS = {
   'boss-w1': { id:'boss-w1', world:1, name:'Coral Warden', shape:'brute', color:'#b03a2e', accent:'#e67e22', eyeColor:'#ffd166', w:96, h:92, easyHealth:32, walkSpeed:40, attackInterval:2.2, pattern:'fire-lob', projectile:{kind:'lob',color:'#ff7043',damage:2,gravity:900,speed:260} },
   'boss-w2': { id:'boss-w2', world:2, name:'Ruin Colossus', shape:'crystal', color:'#2874a6', accent:'#aed6f1', eyeColor:'#eaf6ff', w:84, h:100, easyHealth:42, walkSpeed:30, attackInterval:2.6, pattern:'ice-spread', projectile:{kind:'straight',color:'#9fd8ff',damage:1,gravity:0,speed:320} },
@@ -14,7 +10,7 @@ export const BOSS_DEFS = {
   'boss-w5': { id:'boss-w5', world:5, name:'Ice Leviathan', shape:'sovereign', color:'#1c2833', accent:'#a569bd', eyeColor:'#d7bde2', w:100, h:110, easyHealth:76, walkSpeed:45, attackInterval:2.0, pattern:'teleport-barrage', projectile:{kind:'radial',color:'#c39bd3',damage:2,gravity:0,speed:280} },
 };
 
-export const DEFEAT_ANIMATION_DURATION = 1.4; // seconds
+export const DEFEAT_ANIMATION_DURATION = 1.4;
 
 export function createBoss(bossId, difficultyKey, arena) {
   const def = BOSS_DEFS[bossId];
@@ -29,48 +25,6 @@ export function createBoss(bossId, difficultyKey, arena) {
     attackTimer: def.attackInterval * 0.6,
     dashState: null, teleportCooldown: 0, minionsSpawned: 0,
     phase: 1, defeated: false, defeatTimer: 0, hitFlash: 0, difficultyKey,
-  };
-}port { bossHealthFor } from './difficulty.js';
-import { createProjectile, createParticle } from './entities.js';
-
-/**
- * Five visually distinct bosses, one per world.
- * `easyHealth` is the Easy-mode max HP; Hard is exactly double (enforced in spawnBoss).
- * `pattern` names the unique attack routine handled by runBossPattern().
- */
-export const BOSS_DEFS = {
-  'boss-w1': { id:'boss-w1', world:1, name:'Coral Warden', shape:'brute', color:'#b03a2e', accent:'#e67e22', eyeColor:'#ffd166', w:96, h:92, easyHealth:32, walkSpeed:40, attackInterval:2.2, pattern:'fire-lob', projectile:{kind:'lob',color:'#ff7043',damage:2,gravity:900,speed:260} },
-  'boss-w2': { id:'boss-w2', world:2, name:'Ruin Colossus', shape:'crystal', color:'#2874a6', accent:'#aed6f1', eyeColor:'#eaf6ff', w:84, h:100, easyHealth:42, walkSpeed:30, attackInterval:2.6, pattern:'ice-spread', projectile:{kind:'straight',color:'#9fd8ff',damage:1,gravity:0,speed:320} },
-  'boss-w3': { id:'boss-w3', world:3, name:'Abyss Emperor', shape:'serpent', color:'#117864', accent:'#f7dc6f', eyeColor:'#fff176', w:110, h:54, easyHealth:52, walkSpeed:55, attackInterval:3.0, pattern:'dash-charge', projectile:{kind:'straight',color:'#fff59d',damage:1,gravity:300,speed:340} },
-  'boss-w4': { id:'boss-w4', world:4, name:'Kelp Guardian', shape:'warden', color:'#5b2c6f', accent:'#d2b4de', eyeColor:'#ebdef0', w:90, h:104, easyHealth:62, walkSpeed:35, attackInterval:2.4, pattern:'radial-summon', projectile:{kind:'radial',color:'#bb8fce',damage:1,gravity:0,speed:240} },
-  'boss-w5': { id:'boss-w5', world:5, name:'Ice Leviathan', shape:'sovereign', color:'#1c2833', accent:'#a569bd', eyeColor:'#d7bde2', w:100, h:110, easyHealth:76, walkSpeed:45, attackInterval:2.0, pattern:'teleport-barrage', projectile:{kind:'radial',color:'#c39bd3',damage:2,gravity:0,speed:280} },
-};
-
-export const DEFEAT_ANIMATION_DURATION = 1.4; // seconds
-
-export function createBoss(world, difficultyKey, arena) {
-  const def = BOSS_DEFS[world];
-  if (!def) throw new Error(`No boss defined for world ${world}. Valid worlds: 1-5.`);
-  const maxHealth = bossHealthFor(def.easyHealth, difficultyKey); // hard === easy * 2 exactly
-  return {
-    id: `boss-w${world}`,
-    def, world, arena,
-    x: arena.x + arena.w / 2 - def.w / 2,
-    y: arena.y - def.h,          // stands on arena floor
-    vx: 0, vy: 0,
-    dir: -1,
-    w: def.w, h: def.h,
-    health: maxHealth,
-    maxHealth,
-    attackTimer: def.attackInterval * 0.6,
-    dashState: null,             // used by dash pattern
-    teleportCooldown: 0,
-    minionsSpawned: 0,
-    phase: 1,                    // flips to 2 at <=50% health (faster/more aggressive)
-    defeated: false,
-    defeatTimer: 0,              // runs the defeat animation
-    hitFlash: 0,
-    difficultyKey,
   };
 }
 
