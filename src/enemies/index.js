@@ -216,6 +216,7 @@ function spawnBoss({ bossId, difficulty = 'easy', arena }) {
 
 function resolveBoss(target) {
   if (typeof target === 'string') return state.bosses.get(target) || null;
+  if (typeof target === 'number') return null; // world-number aliases are deliberately unsupported
   if (target && typeof target === 'object' && target.def) return state.bosses.get(target.id) || target;
   if (state.activeBossId != null) return state.bosses.get(state.activeBossId) || null;
   return null;
