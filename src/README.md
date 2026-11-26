@@ -28,7 +28,7 @@ npm run check
 npm run build
 ```
 
-Tests are stored in the repository-level `tests/` directory. The standalone HTML build is written to `src/dist/orca-adventure.html`; CI uploads the build artifact. Check the Actions run corresponding to the latest `main` commit. Browser playtesting is a separate release gate and is not implied by passing automated tests.
+Tests are stored in the repository-level `tests/` directory. The standalone HTML build is written to `../dist/orca-adventure.html` (the repository-level `dist/` directory); CI uploads the build artifact. Check the Actions run corresponding to the latest `main` commit. Browser playtesting is a separate release gate and is not implied by passing automated tests.
 
 ## Current feature map
 
