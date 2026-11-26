@@ -43,26 +43,22 @@ function configure({ stompEnabled, rng, contactGrace } = {}) {
  * @param {{level:number, difficulty:'easy'|'hard', platforms:Array<{x,y,w,h}>, rng?:Function}} opts
  * @returns {Array} the spawned enemies
  */
-function spawnEnemies({ level, difficulty = 'easy', platforms = [], rng = state.rng }) {
+function spawnEnemies({ level, difficulty = 'easy', platforms = [], spawnPoints = [], rng = state.rng }) {
   if (!platforms.length) return [];
   const count = enemyCountFor(level, difficulty);
   const spawned = [];
-
   for (let i = 0; i < count; i++) {
-    const plat = platforms[i % platforms.length];
-    // Mix of types varies with level so early levels stay gentle.
+    const point = spawnPoints.length ? spawnPoints[i % spawnPoints.length] : null;
+    const plat = point ? (platforms[point.platform] ?? platforms[0]) : platforms[i % platforms.length];
     const roll = rng();
     let type = 'walker';
     if (level >= 4 && roll < 0.25) type = 'shooter';
     else if (level >= 2 && roll < 0.5) type = 'flyer';
-
     const margin = 20;
     const spanW = Math.max(plat.w - margin * 2, 10);
-    const x = plat.x + margin + rng() * spanW;
-
-    const e = createEnemy(type, x, type === 'flyer' ? plat.y - 120 : plat.y - 28,
-      { level, difficulty, platform: plat, rng, idFactory: nextId });
-    spawned.push(e);
+    const x = point ? point.x + (i >= spawnPoints.length ? (i % 3) * 34 : 0) : plat.x + margin + rng() * spanW;
+    const y = point ? point.y : (type === 'flyer' ? plat.y - 120 : plat.y - 28);
+    spawned.push(createEnemy(type, x, y, { level, difficulty, platform: plat, rng, idFactory: nextId }));
   }
   state.enemies.push(...spawned);
   return spawned;
