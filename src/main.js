@@ -62,6 +62,10 @@ export function createGameRuntime({ canvas = null, uiRoot = null, profile = {}, 
         player.y = Math.min(player.y, GAME_CONFIG.physics.groundY - player.height);
         player.physics.resetTransientState?.();
         player.shootWasDown = false;
+        ui?.showGameplay?.({ level: world.level.number, world: world.level.world.name });
+        ui?.updateHUD?.({ level: world.level.number, world: world.level.world.name, difficulty: progression.difficulty });
+      } else {
+        ui?.showMainMenu?.();
       }
     }
   });
