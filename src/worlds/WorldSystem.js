@@ -46,9 +46,27 @@ export class WorldSystem {
     this.unsubscribers = [
       events.on('enemy.defeated', () => this.score.addScore(250)),
       events.on('enemy.stomped', () => { this.player.vy = -300; this.player.grounded = false; }),
-      events.on('boss.defeated', event => this.#completeLevel(this.level?.boss?.id ?? event?.bossId))
+      events.on('boss.defeated', event => this.#completeLevel(this.level?.boss?.id ?? event?.bossId)),
+      events.on('player.recovered', () => this.#placeOnSafeStartFloor())
     ];
 
+  }
+
+  #placeOnSafeStartFloor() {
+    if (!this.level) return;
+    const level = this.level;
+    const x = level.start.x;
+    const floor = level.platforms
+      .filter(platform => !platform.oneWay && x + this.player.width > platform.x && x < platform.x + platform.w)
+      .sort((a, b) => a.y - b.y)[0];
+    this.player.x = x;
+    this.player.y = floor ? floor.y - this.player.height : level.start.y;
+    this.player.vx = 0;
+    this.player.vy = 0;
+    this.player.grounded = Boolean(floor);
+    this.player.physics.resetTransientState?.();
+    this.player.setInvulnerable(1500);
+    this.fallRecoveryMs = 1500;
   }
 
   startLevel(number) {
