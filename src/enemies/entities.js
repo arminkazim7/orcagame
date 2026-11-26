@@ -5,10 +5,10 @@ let nextId = 1;
 /** Shared combatant protection interface (duck-typed):
  *  players/power-ups implement: getBounds(), isInvulnerable(), onDamaged?(amount, source) */
 
-export function createEnemy(type, x, y, { level = 1, difficulty = 'easy', platform = null, rng = Math.random } = {}) {
+export function createEnemy(type, x, y, { level = 1, difficulty = 'easy', platform = null, rng = Math.random, idFactory = () => 0 } = {}) {
   const d = getDifficulty(difficulty);
   const base = {
-    id: nextId++,
+    id: idFactory(),
     type,
     x, y,
     vx: 0, vy: 0,
@@ -45,9 +45,9 @@ export function createEnemy(type, x, y, { level = 1, difficulty = 'easy', platfo
   });
 }
 
-export function createProjectile(x, y, vx, vy, { owner = 'enemy', damage = 1, radius = 5, gravity = 0, color = null, ttl = 4 } = {}) {
+export function createProjectile(x, y, vx, vy, { owner = 'enemy', damage = 1, radius = 5, gravity = 0, color = null, ttl = 4, idFactory = () => 0 } = {}) {
   return {
-    id: nextId++, x, y, vx, vy,
+    id: idFactory(), x, y, vx, vy,
     owner, damage, radius, gravity, ttl,
     color: color || (owner === 'player' ? '#ffe066' : '#ff6b6b'),
   };
@@ -61,8 +61,3 @@ export function createParticle(x, y, color, rng = Math.random) {
 
 
 
-/** Ensure newly spawned entities do not reuse IDs from a restored save. */
-export function ensureNextEntityId(value) {
-  if (Number.isSafeInteger(value) && value > nextId) nextId = value;
-  return nextId;
-}
