@@ -26,11 +26,11 @@ const TRACKS = Object.freeze({
 });
 
 const BOSS_TRACK_BY_ID = Object.freeze({
-  'coral-warden': 'boss-1',
-  'kelp-guardian': 'boss-2',
-  'ice-leviathan': 'boss-3',
-  'ruin-colossus': 'boss-4',
-  'abyss-emperor': 'boss-5'
+  'boss-w1': 'boss-1',
+  'boss-w2': 'boss-2',
+  'boss-w3': 'boss-3',
+  'boss-w4': 'boss-4',
+  'boss-w5': 'boss-5'
 });
 
 const SOUND_IDS = new Set([
@@ -112,11 +112,9 @@ export class AudioManager {
   }
 
   _bossTrackId(bossId) {
-    const raw = String(bossId ?? '1').toLowerCase();
-    if (BOSS_TRACK_BY_ID[raw]) return BOSS_TRACK_BY_ID[raw];
-    const match = raw.match(/(?:boss[-_ ]?w?[-_ ]?)?([1-5])$/);
-    if (!match) throw new RangeError(`Unknown boss ID: ${bossId}`);
-    return `boss-${Number(match[1])}`;
+    const trackId = BOSS_TRACK_BY_ID[String(bossId)];
+    if (!trackId) throw new RangeError(`Unknown boss ID: ${bossId}`);
+    return trackId;
   }
 
   _requestTrack(trackId) {
