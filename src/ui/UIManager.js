@@ -75,7 +75,7 @@ export class UIManager {
     const fields = [ ['PLAYER',data.playerName??this.runtime.player.name],['WORLD',world],['LEVEL',`${level}/15`],['MODE',(data.difficulty??prog.difficulty).toUpperCase()],['LIVES',this.runtime.lives.getLives()],['SCORE',this.runtime.score.getScore().toLocaleString()],['NEXT LIFE',`${milestone.remaining.toLocaleString()} pts`],['DEATHS',this.runtime.lives.deathCount ?? state.player.deathCount ?? 0],['POWER-UP',active?.name??'None'],['BOSS',data.bossHealth==null?'—':`${Math.max(0,Math.round(data.bossHealth))}%`]];
     const bar = Math.max(0,Math.min(100,milestone.progress/milestone.threshold*100));
     this.root.querySelector('[data-hud]')?.remove();
-    const html=fields.map(([k,v])=>`<div><small>${esc(k)}</small><b>${esc(v)}</b>${k==='NEXT LIFE'?`<i style="--progress:${bar}%"></i>`:''}</div>`).join('');
+    const html=fields.map(([k,v])=>`<div class="${k==='BOSS'&&data.bossHealth!=null?'hud-boss':''}"><small>${esc(k)}</small><b>${esc(v)}</b>${k==='NEXT LIFE'?`<i style="--progress:${bar}%"></i>`:''}${k==='BOSS'&&data.bossHealth!=null?`<i class="boss-health-fill" style="--progress:${Math.max(0,Math.min(100,data.bossHealth))}%"></i>`:''}</div>`).join('');
     if (typeof document === 'undefined') return { className:'orca-hud', innerHTML:html, dataset:{hud:''} };
     const hud=document.createElement('aside'); hud.className='orca-hud'; hud.dataset.hud=''; hud.setAttribute('role','group'); hud.setAttribute('aria-label','Game status'); hud.innerHTML=html;
     this.root.querySelector('.orca-ui')?.prepend(hud); return hud;
