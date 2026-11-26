@@ -1,4 +1,4 @@
-import { GameEngine } from '../index.js';
+import { GameEngine } from '../src/engine/index.js';
 import { DemoScene, SecondScene } from './DemoScene.js';
 
 const engine = new GameEngine({ canvas: '#game', width: 960, height: 540, backgroundColor: '#111' });
