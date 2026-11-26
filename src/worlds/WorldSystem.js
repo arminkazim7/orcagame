@@ -83,7 +83,8 @@ export class WorldSystem {
     this.encounters.spawnEnemies({
       level: number,
       difficulty: this.progression.difficulty,
-      platforms: level.platforms.filter(platform => platform.oneWay)
+      platforms: level.platforms.filter(platform => platform.oneWay),
+      spawnPoints: level.enemySpawnPoints
     });
     this.ui?.showGameplay?.({ level: number, world: level.world.name });
     this.ui?.updateHUD?.({ level: number, world: level.world.name, difficulty: this.progression.difficulty });
@@ -125,6 +126,30 @@ export class WorldSystem {
     };
     this.encounters.updateEnemies(dt, world);
     if (level.boss) this.encounters.updateBoss(dt, world);
+
+    // Authored hazards deal ordinary combat damage through the shared event bus.
+    for (const hazard of level.hazards ?? []) {
+      if (!intersects(this.playerCombatant.getBounds(), hazard) || this.player.isInvulnerable) continue;
+      if (this.player.takeDamage({ emitEvent: false, source: 'hazard' })) {
+        this.events.emit('player.damaged', { amount: 1, source: 'hazard', hazardId: hazard.id, applied: true });
+      }
+      break;
+    }
+
+    // Gaps are intentional: falling below the playable world costs a life and
+    // returns the player to the active checkpoint (or this level's start).
+    if (this.player.y > level.height + 90) {
+      if (!this.player.isInvulnerable && this.player.takeDamage({ emitEvent: false, source: 'fall', knockback: false })) {
+        this.events.emit('player.damaged', { amount: 1, source: 'fall', applied: true });
+      }
+      const respawn = this.checkpoints.getRespawnPosition(level.start);
+      this.player.x = respawn.x;
+      this.player.y = respawn.y;
+      this.player.vx = 0;
+      this.player.vy = 0;
+      this.player.grounded = false;
+      this.player.setInvulnerable(1100);
+    }
 
     // Enemies are solid obstacles: stop horizontal player movement at their sides.
     // Stomped/dead enemies and upward bounce motion are intentionally not blocked.
