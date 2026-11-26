@@ -1,3 +1,5 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import { EventBus } from '../../src/event-bus.js';
 import { EncounterSystem, BOSS_DEFS } from '../../src/enemies/index.js';
 const events = new EventBus();
