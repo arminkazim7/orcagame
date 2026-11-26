@@ -150,3 +150,24 @@ test('version 1 saves migrate to version 2 and never restore paused state', asyn
   assert.equal(result.loaded, true);
   assert.equal(result.version, 2);
 });
+
+
+test('save v2 migrates world-number boss keys to semantic IDs', () => {
+  const { save } = makeHarness();
+  const migrated = save.migrateSave({
+    version: 2,
+    progression: { unlockedBosses: ['boss-w1', 'boss-w4'], defeatedBosses: ['boss-w1'] },
+    gameplayState: { world: { encounter: {
+      schemaVersion: 2, enemies: [], projectiles: [], particles: [],
+      bosses: [{ id: 'boss-w1', world: 1 }], activeBossId: 'boss-w1'
+    } } }
+  });
+  assert.equal(migrated.version, 3);
+  assert.deepEqual(migrated.progression.unlockedBosses, ['coral-warden', 'kelp-guardian']);
+  assert.deepEqual(migrated.progression.defeatedBosses, ['coral-warden']);
+  const encounter = migrated.gameplayState.world.encounter;
+  assert.equal(encounter.schemaVersion, 3);
+  assert.equal(encounter.activeBossId, 'coral-warden');
+  assert.equal(encounter.bosses[0].id, 'coral-warden');
+  assert.equal('activeBossWorld' in encounter, false);
+});
